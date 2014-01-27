@@ -252,7 +252,7 @@ public class BaseNegamaxEngine implements SearchEngine {
 		}
 
 		if (isDraw(board)) {
-			return 0;
+			return -contemptFactor(board);
 		}
 		if (depthLeft == 0) {
 			int rv = staticEval(entryMove, board, maximizingPlayer, alpha,
@@ -478,6 +478,16 @@ public class BaseNegamaxEngine implements SearchEngine {
 		return false;
 	}
 
+	private int contemptFactor(EngineBoard board) {
+		if (board.getFullMoveNumber() < 30) {
+			return 50;
+		} else if (board.getFullMoveNumber() < 50) {
+			return 25;
+		} else {
+			return 0;
+		}
+	}
+	
 	/**
 	 * Swaps the PV move with the first move.
 	 * 

@@ -172,6 +172,11 @@ abstract public class AbstractEngine implements SearchEngine {
 			stats.ttHit(quiesce);
 			return localVars.eval;
 		}
+		
+		if (isDraw(board)) {
+			return -contemptFactor(board);
+		}
+		
 		alpha = localVars.alpha;
 		
 		if (ply > 0 && noMoveEvalCutoff(board, alpha, beta, depthLeft, ply, quiesce, localVars)) {
@@ -254,6 +259,8 @@ abstract public class AbstractEngine implements SearchEngine {
 
 	}
 
+
+	
 
 	private boolean isFutilityPruned(EngineBoard board, int alpha, int beta,
 			int terminalEval, int depthLeft) {
@@ -569,6 +576,26 @@ abstract public class AbstractEngine implements SearchEngine {
 			board.undoNullMove();
 		}
 		moveStack.pop();
+	}
+	
+	private boolean isDraw(EngineBoard board) {
+		if (board.getHalfMoveClock() >= 50) {
+			return true;
+		}
+		if (board.drawByRepetition()) {
+			return true;
+		}
+		return false;
+	}
+	
+	private int contemptFactor(EngineBoard board) {
+		if (board.getFullMoveNumber() < 30) {
+			return 50;
+		} else if (board.getFullMoveNumber() < 50) {
+			return 25;
+		} else {
+			return 0;
+		}
 	}
 	
 	// Taken from mediocre, basically

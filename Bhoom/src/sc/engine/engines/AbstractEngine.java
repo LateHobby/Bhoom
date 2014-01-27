@@ -128,8 +128,9 @@ abstract public class AbstractEngine implements SearchEngine {
 			if (movesToDo < 0) {
 				movesToDo = 75 - board.getFullMoveNumber();
 			}
-			int timeLeft = engineTime + movesToDo * engineInc;
-			timeAllowed = timeLeft / movesToDo;
+			timeAllowed = (engineTime + (40 -1) * engineInc)/40;
+//			int timeLeft = engineTime + movesToDo * engineInc;
+//			timeAllowed = timeLeft / movesToDo;
 		}
 		System.out.printf("Abandon after: %d\n", timeAllowed);
 		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();

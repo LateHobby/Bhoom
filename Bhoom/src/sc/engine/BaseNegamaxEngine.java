@@ -125,7 +125,8 @@ public class BaseNegamaxEngine implements SearchEngine {
 			if (moveNum > 50) {
 				lim = 75;
 			}
-			long timeForMove = engineTime/(lim - board.getFullMoveNumber());
+//			long timeForMove = engineTime/(lim - board.getFullMoveNumber());
+			long timeForMove = (engineTime + (40 -1) * engineInc)/40;
 			return searchByTime(board, timeForMove);
 		}
 		return null;

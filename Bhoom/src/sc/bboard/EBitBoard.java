@@ -120,6 +120,7 @@ public class EBitBoard implements EngineBoard {
 		moveHistory.clear();
 		stateHistory.clear();
 		hashHistory.clear();
+		pawnHashHistory.clear();
 		
 		posInfo.wConfig.initialize();
 		posInfo.bConfig.initialize();

@@ -86,7 +86,7 @@ public class TestEBitBoard {
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
 		
-		int secondMove = ParseUtils.getMove("d7d5");
+		int secondMove = BoardUtils.encodeMove(cb, "d7d5");
 		int[] moves = new int[128];
 		int numMoves = cb.getMoveGenerator().fillLegalMoves(moves, 0);
 		assertFalse(cb.getMoveGenerator().isMoveLegal(secondMove));
@@ -100,7 +100,7 @@ public class TestEBitBoard {
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
 		
-		int secondMove = ParseUtils.getMove("c7c8");
+		int secondMove = BoardUtils.encodeMove(cb, "c7c8");
 		int[] moves = new int[128];
 		int numMoves = cb.getMoveGenerator().fillLegalMoves(moves, 0);
 		assertFalse(cb.getMoveGenerator().isMoveLegal(secondMove));
@@ -115,27 +115,27 @@ public class TestEBitBoard {
 		String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("a2a3");
+		int move = BoardUtils.encodeMove(cb, "a2a3");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("e7e5");
+		move = BoardUtils.encodeMove(cb, "e7e5");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("d2d3");
+		move = BoardUtils.encodeMove(cb, "d2d3");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("f8b4");
+		move = BoardUtils.encodeMove(cb, "f8b4");
 		cb.makeMove(move, false);
 		// the only moves that remove the check
 		int failingMove;
-		failingMove = ParseUtils.getMove("a3b4");
+		failingMove = BoardUtils.encodeMove(cb, "a3b4");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
-		failingMove = ParseUtils.getMove("c2c3");
+		failingMove = BoardUtils.encodeMove(cb, "c2c3");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
-		failingMove = ParseUtils.getMove("c1d2");
+		failingMove = BoardUtils.encodeMove(cb, "c1d2");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
-		failingMove = ParseUtils.getMove("d1d2");
+		failingMove = BoardUtils.encodeMove(cb, "d1d2");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
-		failingMove = ParseUtils.getMove("b1c3");
+		failingMove = BoardUtils.encodeMove(cb, "b1c3");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
-		failingMove = ParseUtils.getMove("b1d2");
+		failingMove = BoardUtils.encodeMove(cb, "b1d2");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 		int numMoves = cb.getMoveGenerator().fillLegalMoves(new int[128], 0);
@@ -151,7 +151,7 @@ public class TestEBitBoard {
 
 		// the only moves that remove the check
 		int failingMove;
-		failingMove = ParseUtils.getMove("g7g6");
+		failingMove = BoardUtils.encodeMove(cb, "g7g6");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 		int numMoves = cb.getMoveGenerator().fillLegalMoves(new int[128], 0);
@@ -165,15 +165,15 @@ public class TestEBitBoard {
 		String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("d2d3");
+		int move = BoardUtils.encodeMove(cb, "d2d3");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("g8f6");
+		move = BoardUtils.encodeMove(cb, "g8f6");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("e1d2");
+		move = BoardUtils.encodeMove(cb, "e1d2");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("f6e4");
+		move = BoardUtils.encodeMove(cb, "f6e4");
 		cb.makeMove(move, false);
-		int failingMove = ParseUtils.getMove("a2a3");
+		int failingMove = BoardUtils.encodeMove(cb, "a2a3");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 	}
@@ -192,12 +192,12 @@ public class TestEBitBoard {
 		cb.makeMove(move, false);
 		fen = "2kr3r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R4RK1 w - - 2 2";
 		assertEquals(fen, BoardUtils.getFen(cb));
-		move = ParseUtils.getMove("e2a6");
+		move = BoardUtils.encodeMove(cb, "e2a6");
 		cb.makeMove(move, false);
 		fen = "2kr3r/p1ppqpb1/Bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R4RK1 b - - 0 2";
 		assertEquals(fen, BoardUtils.getFen(cb));
 		
-		int failingMove = ParseUtils.getMove("d8e8");
+		int failingMove = BoardUtils.encodeMove(cb, "d8e8");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 	}
@@ -208,7 +208,7 @@ public class TestEBitBoard {
 		String startFen = "8/7p/p5pb/4k3/P3n3/3p4/P5PP/Rr4K1 w - - 2 31";
 		FENInfo fi = FENInfo.parse(startFen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int failingMove = ParseUtils.getMove("g1h1");
+		int failingMove = BoardUtils.encodeMove(cb, "g1h1");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 	}
 	
@@ -219,9 +219,9 @@ public class TestEBitBoard {
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
 		
-		int failingMove = ParseUtils.getMove("e5g4");
+		int failingMove = BoardUtils.encodeMove(cb, "e5g4");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
-		int move = ParseUtils.getMove("c3e2");
+		int move = BoardUtils.encodeMove(cb, "c3e2");
 		
 		assertTrue(cb.getMoveGenerator().isMoveLegal(move));
 	}
@@ -233,7 +233,7 @@ public class TestEBitBoard {
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
 		
-		int move = ParseUtils.getMove("f3g2");
+		int move = BoardUtils.encodeMove(cb, "f3g2");
 		assertTrue(cb.getMoveGenerator().isMoveLegal(move));
 	}
 	
@@ -243,10 +243,10 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("a1b1");
+		int move = BoardUtils.encodeMove(cb, "a1b1");
 		cb.makeMove(move, false);
 
-		int failingMove = ParseUtils.getMove("e8c8");
+		int failingMove = BoardUtils.encodeMove(cb, "e8c8");
 		// add castling
 		int actualMove = Encodings.encodeMove(
 				Encodings.getFromSquare(failingMove),
@@ -262,10 +262,10 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("e5c6");
+		int move = BoardUtils.encodeMove(cb, "e5c6");
 		cb.makeMove(move, false);
 
-		int failingMove = ParseUtils.getMove("e8c8");
+		int failingMove = BoardUtils.encodeMove(cb, "e8c8");
 		// add castling
 		int actualMove = Encodings.encodeMove(
 				Encodings.getFromSquare(failingMove),
@@ -283,7 +283,7 @@ public class TestEBitBoard {
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
 		
 
-		int failingMove = ParseUtils.getMove("e1g1");
+		int failingMove = BoardUtils.encodeMove(cb, "e1g1");
 		// add castling
 		int actualMove = Encodings.encodeMove(
 				Encodings.getFromSquare(failingMove),
@@ -300,10 +300,10 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("e5d7");
+		int move = BoardUtils.encodeMove(cb, "e5d7");
 		cb.makeMove(move, false);
 
-		int failingMove = ParseUtils.getMove("e8c8");
+		int failingMove = BoardUtils.encodeMove(cb, "e8c8");
 		// add castling
 		int actualMove = Encodings.encodeMove(
 				Encodings.getFromSquare(failingMove),
@@ -319,9 +319,9 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("a2a4");
+		int move = BoardUtils.encodeMove(cb, "a2a4");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("b4a3");
+		move = BoardUtils.encodeMove(cb, "b4a3");
 		move = Encodings.encodeMove(Encodings.getFromSquare(move),
 				Encodings.getToSquare(move), Encodings.EMPTY, true, false);
 		cb.makeMove(move, false);
@@ -337,14 +337,14 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("a1b1");
+		int move = BoardUtils.encodeMove(cb, "a1b1");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("f6e4");
+		move = BoardUtils.encodeMove(cb, "f6e4");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("f3f7");
+		move = BoardUtils.encodeMove(cb, "f3f7");
 		cb.makeMove(move, false);
 
-		int failingMove = ParseUtils.getMove("e8c8");
+		int failingMove = BoardUtils.encodeMove(cb, "e8c8");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 	}
@@ -355,11 +355,11 @@ public class TestEBitBoard {
 		String fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("f3h3");
+		int move = BoardUtils.encodeMove(cb, "f3h3");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("b4b3");
+		move = BoardUtils.encodeMove(cb, "b4b3");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("h3h8");
+		move = BoardUtils.encodeMove(cb, "h3h8");
 		cb.makeMove(move, false);
 
 		String tfen = "r3k2Q/p1ppqpb1/bn2pnp1/3PN3/4P3/1pN5/PPPBBPPP/R3K2R b KQq - 0 2";
@@ -406,7 +406,7 @@ public class TestEBitBoard {
 		String cfen = BoardUtils.getFen(cb);
 		assertEquals(fen, cfen);
 
-		int failingMove = ParseUtils.getMove("c4d3");
+		int failingMove = BoardUtils.encodeMove(cb, "c4d3");
 		// add en-passant property
 		int actualMove = Encodings.encodeMove(
 				Encodings.getFromSquare(failingMove),
@@ -441,17 +441,18 @@ public class TestEBitBoard {
 		String fen = "rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int move = ParseUtils.getMove("e5e6");
+		int move = BoardUtils.encodeMove(cb, "e5e6");
+		assertTrue("BoardUtils returned " + move, ParseUtils.getMove("e5e6", false, false) == move);
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("f5f4");
+		move = BoardUtils.encodeMove(cb, "f5f4");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("e6d7");
+		move = BoardUtils.encodeMove(cb, "e6d7");
 		cb.makeMove(move, false);
-		move = ParseUtils.getMove("e8f7");
+		move = BoardUtils.encodeMove(cb, "e8f7");
 		cb.makeMove(move, false);
 
-		int failingMove = ParseUtils.getMove("d7c8Q");
-
+		int failingMove = BoardUtils.encodeMove(cb, "d7c8Q");
+		assertTrue("BoardUtils returned " + failingMove, ParseUtils.getMove("d7c8Q", false, false) == failingMove);
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
 
 	}
@@ -462,7 +463,7 @@ public class TestEBitBoard {
 		String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 		FENInfo fi = FENInfo.parse(fen);
 		cb.initialize(fi.locatedPieces, fi.whiteToMove, fi.enPassantSquare, fi.halfMoveClock, fi.fullMoveNumber, fi.cwKing, fi.cwQueen, fi.cbKing, fi.cbQueen);
-		int failingMove = ParseUtils.getMove("a2a3");
+		int failingMove = BoardUtils.encodeMove(cb, "a2a3");
 		int[] moves = new int[128];
 		int numMoves = cb.getMoveGenerator().fillLegalMoves(moves, 0);
 		assertTrue(cb.getMoveGenerator().isMoveLegal(failingMove));
@@ -492,7 +493,7 @@ public class TestEBitBoard {
 				"d8e8", "e1d2", "b8a6", "d4d5", "a8b8", "d5d6", "b8a8", "a5a3",
 				"e8d8", "d6e7", "d8c7", "e7f8Q", "c7b6", "a3c5");
 
-		int failingMove = ParseUtils.getMove("b6c5");
+		int failingMove = BoardUtils.encodeMove(cb, "b6c5");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 	}
 
@@ -503,7 +504,7 @@ public class TestEBitBoard {
 		makeMoves(cb, "d2d4", "g8h6", "c1g5", "h8g8", "d1d3", "g8h8", "d3e3",
 				"h8g8", "g5e7");
 
-		int failingMove = ParseUtils.getMove("e8e7");
+		int failingMove = BoardUtils.encodeMove(cb, "e8e7");
 		assertFalse(cb.getMoveGenerator().isMoveLegal(failingMove));
 	}
 
@@ -574,7 +575,7 @@ public class TestEBitBoard {
 	
 	private void makeMoves(EBitBoard cb, String... moves) {
 		for (String ms : moves) {
-			int move = ParseUtils.getMove(ms);
+			int move = BoardUtils.encodeMove(cb, ms);
 			cb.makeMove(move, false);
 		}
 

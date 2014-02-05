@@ -10,6 +10,7 @@ import sc.encodings.EConstants;
 import sc.encodings.Encodings;
 import sc.engine.EngineBoard;
 
+// This class is inherently non re-entrant - see static variable moves[]
 public class BoardUtils {
 
 	public static char[] getLocatedPieces(SPCBoard board) {
@@ -53,6 +54,33 @@ public class BoardUtils {
 
 	}
 
+	// Performs the inverse of PrintUtils.notation(move)
+	public static int encodeMove(SPCBoard board, String notation) {
+		int numMoves = board.getMoveGenerator().fillLegalMoves(moves, 0);
+		char[] ca = notation.toCharArray();
+		short from = ParseUtils.getSquare(ca, 0);
+		short to = ParseUtils.getSquare(ca, 2);
+		byte pieceToPromoteTo = Encodings.EMPTY;
+		if (ca.length > 4) {
+			char c = ca[4]; //fifth character
+			if (board.getWhiteToMove()) {
+				c = Character.toUpperCase(c);
+			}
+			pieceToPromoteTo = FENInfo.fenCharToPiece(c);
+		}
+		for (int i = 0; i < numMoves; i++) {
+			short fromSquare = Encodings.getFromSquare(moves[i]);
+			short toSquare = Encodings.getToSquare(moves[i]);
+			if (from == fromSquare && to == toSquare) {
+				byte promoteTarget = Encodings.getPieceToPromoteTo(moves[i]);
+				if (pieceToPromoteTo == promoteTarget) {
+					return moves[i];
+				} 
+			}
+		}
+		return 0;
+	}
+	
 	public static final String pgnForm(SPCBoard board, int move) {
 		StringBuilder ret = new StringBuilder();
 		short fromSquare = Encodings.getFromSquare(move);
@@ -200,7 +228,7 @@ public class BoardUtils {
 		int[] moveArray = new int[128];
 		int numMovesMade = 0;
 		for (int i = start; i < end; i++) {
-			int tmpMove = ParseUtils.getMove(sa[i]);
+			int tmpMove = encodeMove(board, sa[i]);
 			short from = Encodings.getFromSquare(tmpMove);
 			short to = Encodings.getToSquare(tmpMove);
 			int numMoves = board.getMoveGenerator()

@@ -15,9 +15,6 @@ public class ParseUtils {
 		}
 	}
 	
-	public static int getMove(String notationmove) {
-		return getMove(notationmove, false, false);
-	}
 	/** Gets the encoding for the given algebraic move.  */
 	public static int getMove(String notationmove, boolean enPassantCapture, boolean castling) {
 		char[] carr = notationmove.toCharArray();

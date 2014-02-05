@@ -170,13 +170,11 @@ public class CompareAgainstExternal {
 		final EngineSetting setting = new EngineSetting();
 		setting.depth = 6;
 		setting.timeMs = 0;
-		final EngineFactory ef = new EngineFactory(SearchMode.MTDF, false, false, false, false, false, false, false);
-//		ExternalUCIEngine uci = new ExternalUCIEngine(
-//				"C:\\Program Files (x86)\\Arena\\Engines\\Rybka\\Rybka v2.2n2.mp.x64.exe");
+		final EngineFactory ef = new EngineFactory(SearchMode.MTDF, true, true, true, false, true, true, true);
 		ExternalUCIEngine uci = new ExternalUCIEngine(
 		"C:\\Program Files (x86)\\BabasChess\\Engines\\toga\\togaII.exe");
 		CompareAgainstExternal cae = new CompareAgainstExternal(ef, setting, uci);
-		cae.runSuite(new File("testing/suites/Test20.EPD"), System.out );
+		cae.runSuite(new File("testing/suites/SMALLTEST.EPD"), System.out );
 		uci.shutDown();
 		System.exit(0);
 		

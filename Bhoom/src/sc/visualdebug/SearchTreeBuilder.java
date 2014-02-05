@@ -2,6 +2,7 @@ package sc.visualdebug;
 
 import sc.engine.EngineListener;
 import sc.engine.SearchEngine.Continuation;
+import sc.util.TTable.TTEntry;
 
 
 public class SearchTreeBuilder implements EngineListener {
@@ -17,8 +18,8 @@ public class SearchTreeBuilder implements EngineListener {
 	}
 	
 	@Override
-	public void enteredNode(int alpha, int beta, boolean quiescent, int lastMove, int flags) {
-		Node n = new Node(quiescent, alpha, beta, lastMove);
+	public void enteredNode(int alpha, int beta, int depthLeft, int ply, int lastMove, int flags) {
+		Node n = new Node(depthLeft <= 0, alpha, beta, lastMove);
 		if (root == null) {
 			root = n;
 		} else {
@@ -95,7 +96,7 @@ public class SearchTreeBuilder implements EngineListener {
 		public Node parent = null;
 		public Node[] children = new Node[10];
 		public int numChildren = 0;
-		public boolean maximizing;
+		public boolean maximizing = true;
 		public int alpha;
 		public int beta;
 		public int eval;
@@ -104,6 +105,7 @@ public class SearchTreeBuilder implements EngineListener {
 		public boolean onResultPath;
 		public boolean betaCutoff;
 		public int nodeCount;
+		public int staticEval;
 		
 		Node(boolean quiescent, int alpha, int beta, int lastMove) {
 			this.quiescent = quiescent;
@@ -130,6 +132,30 @@ public class SearchTreeBuilder implements EngineListener {
 		public boolean isLeaf() {
 			return numChildren == 0;
 		}
+	}
+
+	@Override
+	public void abandonSearch() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void store(TTEntry stored) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void retrieve(TTEntry stored) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void staticEval(int staticEval) {
+		currentNode.staticEval = staticEval;
+		
 	}
 
 	

@@ -1,7 +1,5 @@
 package sc.engine;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 import sc.bboard.FMoves;
@@ -18,7 +16,7 @@ public class See {
 
 	// If true, then the scores are stored in evaltable but not used except to check,
 	// if the same position occurs again, that the score evaluated is the same as the one stored.
-	boolean debug = false;
+	final boolean debug = false;
 	
 	long[] squareKey = new long[64];
 	long[] pieceKey = new long[13];
@@ -58,9 +56,6 @@ public class See {
 		long zKey = getPositionAndMoveKey(board, move);
 		if (evalTable.contains(zKey)) {
 			successes++;
-//			if (successes % 1000 == 0) {
-//				System.out.printf("See:[%d, %d]\n", calls, successes);
-//			}
 			storedEval = (int) evalTable.get(zKey);
 			if (!debug) {
 				return storedEval;
@@ -106,6 +101,7 @@ public class See {
 			whiteToMove = !whiteToMove;
 			try {
 				pinfo.updateDerivedBoards();
+				
 			} catch (Throwable t) {
 				System.out.println(BoardUtils.getFen(board));
 				System.out.println(PrintUtils.notation(move));

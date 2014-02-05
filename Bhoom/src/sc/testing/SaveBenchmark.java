@@ -6,20 +6,15 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.Writer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import sc.engine.SearchEngine;
-import sc.engine.engines.IDAspWinEngine;
-import sc.engine.engines.MTDFBinaryEngine;
-import sc.engine.engines.MTDFEngine;
-import sc.engine.engines.MTDFHybridEngine;
+import sc.engine.engines.AbstractEngine.SearchMode;
 import sc.testing.TestingUtils.EngineSetting;
 import sc.testing.TestingUtils.SuiteResult;
 import sc.util.ObjectPool.Factory;
-import sc.util.UCI.EFactory;
 
 public class SaveBenchmark {
 
@@ -28,9 +23,9 @@ public class SaveBenchmark {
 	public static File suites = new File(dir, "suites");
 
 	private void saveBenchmark(String suiteFile,
-			Factory<SearchEngine> engineFactory, EngineSetting setting,
+			Factory<SearchEngine> enginEngineFactory, EngineSetting setting,
 			String saveFile) throws Exception {
-		SuiteResult sr = TestingUtils.getTestResults(suiteFile, engineFactory,
+		SuiteResult sr = TestingUtils.getTestResults(suiteFile, enginEngineFactory,
 				setting);
 		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
 				saveFile));
@@ -38,19 +33,14 @@ public class SaveBenchmark {
 		oos.close();
 	}
 
-	/**
-	 * @param args
-	 * @throws Exception
-	 */
+		
 	public static void main(String[] args) throws Exception {
 		ScheduledExecutorService ses = Executors.newScheduledThreadPool(8);
 
-		// SearchEngine se = new NFullQuiescenceEngine("NFullQuiescence", new
-		// SideToMoveEvaluator(), 1000);
 		final EngineSetting setting = new EngineSetting();
 		setting.depth = 7;
 		setting.timeMs = 0;
-		final File suiteFile = new File(suites, "Test20.EPD");
+		final File suiteFile = new File(suites, "Test100.EPD");
 		// File saveFile = new File(benchmark,
 		// "SMALL-IDAsp-NullMoves-SeeWithHash-100sec.ser");
 		// File saveFile = new File(benchmark,
@@ -58,14 +48,14 @@ public class SaveBenchmark {
 		// File saveFile = new File(benchmark,
 		// "SMALL-MTDf-SeeWithHash-100sec.ser");
 
-		for (Class<?> clz : new Class[] { /* IDAspWinEngine.class,
-				MTDFEngine.class, MTDFBinaryEngine.class */ MTDFHybridEngine.class }) {
-			final Class<?> c = clz;
+		for (SearchMode clz : new SearchMode[] { SearchMode.ASP_WIN,
+				SearchMode.MTDF, SearchMode.BIN_MTDF, SearchMode.HYBRID_MTDF }) {
+			final SearchMode c = clz;
 			for (boolean lmr : new boolean[] { false, true }) {
 				for (boolean nm : new boolean[] { false, true }) {
 					for (boolean fp : new boolean[] { false, true }) {
-						final EFactory ef = new EFactory(c, lmr, nm, fp);
-						final String engineName = EFactory.getName(c, lmr, nm,
+						final EngineFactory ef = new EngineFactory(c, lmr, nm, fp);
+						final String engineName = EngineFactory.getName(c, lmr, nm,
 								fp);
 						final String resultFileName = getResultFileName(
 								setting, engineName, suiteFile);

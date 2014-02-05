@@ -96,7 +96,7 @@ public class FENInfo  {
 		fi.whiteToMove = whiteToMove;
 		nextPiece = farr[position++];
 		if (nextPiece != fieldSeparator) {
-			throw new RuntimeException("Expected space");
+			throw new RuntimeException("Expected space after [" + nextPiece + "]");
 		}
 
 		nextPiece = farr[position++];

@@ -12,10 +12,12 @@ import sc.bboard.EBitBoard;
 import sc.engine.EngineBoard;
 import sc.engine.EngineStats;
 import sc.engine.SearchEngine;
+import sc.engine.engines.AbstractEngine.SearchMode;
 import sc.testing.TestingUtils.EPDTest;
 import sc.testing.TestingUtils.EngineSetting;
 import sc.testing.TestingUtils.TestResult;
 import sc.util.BoardUtils;
+import sc.util.ExternalUCIEngine;
 import sc.util.ObjectPool.Factory;
 import sc.util.PrintUtils;
 import sc.util.SimpleStats;
@@ -34,6 +36,7 @@ public class CompareAgainstExternal {
 		this.setting = setting;
 		this.uci = uci;
 		uci.startup();
+		uci.send("setoption name MultiPV value 1");
 	}
 	
 	public void runSuite(File suiteFile, PrintStream stream) throws Exception {
@@ -45,18 +48,23 @@ public class CompareAgainstExternal {
 			TestResult result = TestingUtils.getTestResult(ef, setting, board, test);
 			BoardUtils.initializeBoard(board, test.fen);
 			uci.getBestMove(board, setting.depth, setting.timeMs);
-			int uciEval = uci.getEval();
-			int uciMove = uci.getMove();
+			int uciBestMoveEval = uci.getEval();
+			int uciBestMove = uci.getMove();
 			
 			int move = result.moves[0];
-			board.makeMove(move, false);
-			uci.evaluatePosition(board, setting.depth, setting.timeMs);
-			int uciMoveEval = uci.getEval();
-			ScoredResult sres = new ScoredResult(result, uciMoveEval - uciEval, move == uciMove);
+			int uciMoveEval = uciBestMoveEval;
+			if (move != uciBestMove) {
+				board.makeMove(move, false);
+				uci.evaluateMove(board, move, setting.depth, setting.timeMs);
+				uciMoveEval = uci.getEval();
+			}
+			ScoredResult sres = new ScoredResult(test.fen, result, uciMoveEval, uciBestMoveEval, move, uciBestMove);
 			sr.add(sres);
 			printIntermediateResults(stream, index, sr);
 			index++;
 		}
+		printResults(stream, sr);
+		printDetails(stream, sr);
 	}
 	
 	private void printIntermediateResults(PrintStream stream, int index,
@@ -67,6 +75,22 @@ public class CompareAgainstExternal {
 		
 	}
 
+	private void printDetails(PrintStream stream, List<ScoredResult> sr) {
+		
+		int count = 0;
+		for (ScoredResult sres : sr) {
+			count++;
+			EngineStats olds = sres.result.stats;
+			System.out.println("------ " + sres.result.testName);
+			System.out.println(sres.fen);
+			System.out.printf("Engine: %s [%d]  External: %s [%d]\n", 
+					PrintUtils.notation(sres.engineMove), sres.externalEvalForEngineMove,
+					PrintUtils.notation(sres.externalBestMove), sres.externalBestMove);
+			
+			
+		}
+		
+	}
 	private void printResults(PrintStream stream, List<ScoredResult> sr) {
 
 		String[] heading = new String[] { "Variable", "Mean", "SD", "Min", "Max", "Tstat"};
@@ -84,10 +108,10 @@ public class CompareAgainstExternal {
 			count++;
 			EngineStats olds = sres.result.stats;
 			
-			sa[0].include(sres.score);
+			sa[0].include(sres.externalBestEval - sres.externalEvalForEngineMove);
 			sa[1].include( olds.getNodes(false) + olds.getNodes(true) );
 			sa[2].include(olds.getDepth());
-			sa[3].include(sres.match ? 1 : 0);
+			sa[3].include(sres.engineMove == sres.externalBestMove ? 1 : 0);
 		}
 		
 		
@@ -119,17 +143,43 @@ public class CompareAgainstExternal {
 	}
 
 	private class ScoredResult {
-		public ScoredResult(TestResult result, int score, boolean match) {
+		TestResult result; 
+		int externalEvalForEngineMove; 
+		int externalBestEval; 
+		int engineMove; 
+		int externalBestMove;
+		private String fen;
+		public ScoredResult(String fen, TestResult result, 
+				int externalEvalForEngineMove, int externalBestEval, int engineMove,
+				int externalBestMove) {
+			super();
+			this.fen = fen;
 			this.result = result;
-			this.score = score;
-			this.match = match;
+			this.externalEvalForEngineMove = externalEvalForEngineMove;
+			this.externalBestEval = externalBestEval;
+			this.engineMove = engineMove;
+			this.externalBestMove = externalBestMove;
 		}
-		TestResult result;
-		int score;
-		boolean match;
+		
+		
+		
 	}
 	
 	
-	
+	public static void main(String[] args) throws Exception {
+		final EngineSetting setting = new EngineSetting();
+		setting.depth = 6;
+		setting.timeMs = 0;
+		final EngineFactory ef = new EngineFactory(SearchMode.MTDF, false, false, false, false, false, false, false);
+//		ExternalUCIEngine uci = new ExternalUCIEngine(
+//				"C:\\Program Files (x86)\\Arena\\Engines\\Rybka\\Rybka v2.2n2.mp.x64.exe");
+		ExternalUCIEngine uci = new ExternalUCIEngine(
+		"C:\\Program Files (x86)\\BabasChess\\Engines\\toga\\togaII.exe");
+		CompareAgainstExternal cae = new CompareAgainstExternal(ef, setting, uci);
+		cae.runSuite(new File("testing/suites/Test20.EPD"), System.out );
+		uci.shutDown();
+		System.exit(0);
+		
+	}
 	
 }

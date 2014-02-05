@@ -31,4 +31,15 @@ public class TestFENInfo {
 		
 	}
 	
+	
+	@Test
+	public void testReadingStartPos() {
+		EBitBoard cb = new EBitBoard();
+		String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+		FENInfo fi = FENInfo.parse(fen);
+		String rfen = fi.toFEN();
+		
+		assertEquals(fen, rfen);
+		
+	}
 }

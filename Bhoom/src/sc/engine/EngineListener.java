@@ -1,6 +1,7 @@
 package sc.engine;
 
 import sc.engine.SearchEngine.Continuation;
+import sc.util.TTable.TTEntry;
 
 
 public interface EngineListener {
@@ -16,7 +17,7 @@ public interface EngineListener {
 	static public final int TT_UPPERBOUND = 128;
 	static public final int WHITE_TO_MOVE = 256;
 	
-	public void enteredNode(int alpha, int beta, boolean quiescent, int move, int flags);
+	public void enteredNode(int alpha, int beta, int depthLeft, int ply, int move, int flags);
 	
 	public void exitNode(int eval);
 
@@ -27,6 +28,14 @@ public interface EngineListener {
 	public void ttableHit(int type);
 
 	public void futilityPrune(int terminalEval, int mvp);
+
+	public void abandonSearch();
+
+	public void store(TTEntry stored);
+
+	public void retrieve(TTEntry stored);
+
+	public void staticEval(int staticEval);
 		
 	
 }

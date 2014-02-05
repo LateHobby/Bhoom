@@ -27,6 +27,8 @@ public interface EngineBoard extends SPCBoard {
 	void undoNullMove();
 
 	long getPawnZobristKey(boolean white);
+
+	boolean drawByInsufficientMaterial();
 	
 	
 }

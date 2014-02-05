@@ -541,7 +541,36 @@ public class TestEBitBoard {
 		
 
 	}
+	
+	@Test
+	public void testQueenCapture() {
+		EBitBoard cb = new EBitBoard();
+		String fen = "r1bqk2r/pp1n1pp1/2pbp1Qp/8/2pP2n1/2N1PN2/PP1B1P1P/1R2KB1R b Kkq - 1 10";
+		BoardUtils.initializeBoard(cb, fen);
+		int move = BoardUtils.encodedForm(cb, "f7g6");
+		boolean isLegal = cb.makeMove(move, true);
+		assertTrue(isLegal);
 
+	}
+	
+	@Test
+	public void testDrawRecognition() {
+		EBitBoard board = new EBitBoard();
+		String fen = "6k1/2p5/2n1p2p/4P1p1/1p3nP1/3pKP2/rB6/3N4 b - - 0 35";
+		BoardUtils.initializeBoard(board, fen);
+		String[] moves = {"b4b3", "e3e4", "a2a4", "e4e3", "a4a2", "e3e4", "a2a4", "e4e3", "a4a2"};
+		int i = 0;
+		for (String moveS : moves) {
+			int move = BoardUtils.encodedForm(board, moveS);
+			assertTrue("Failed on " + i + ". " + moveS , board.makeMove(move, true));
+//			System.out.println(BoardUtils.getFen(board));
+//			System.out.println("" + i + ". " + board.getZobristKey());
+			i++;
+		}
+		
+		assertTrue("Draw Not recognized" , board.drawByRepetition());
+
+	}
 	
 	private void makeMoves(EBitBoard cb, String... moves) {
 		for (String ms : moves) {

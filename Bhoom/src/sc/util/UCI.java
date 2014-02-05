@@ -7,16 +7,10 @@ import java.io.InputStreamReader;
 import sc.SPCBoard;
 import sc.bboard.EBitBoard;
 import sc.engine.EngineBoard;
-import sc.engine.NFullQuiescenceEngine;
 import sc.engine.SearchEngine;
 import sc.engine.SearchEngine.Continuation;
-import sc.engine.engines.IDAspWinEngine;
-import sc.engine.engines.MTDFBinaryEngine;
-import sc.engine.engines.MTDFEngine;
-import sc.engine.engines.MTDFHybridEngine;
-import sc.engine.movesorter.SeeHashSorter;
-import sc.engine.ttables.AlwaysReplace;
-import sc.evaluators.SideToMoveEvaluator;
+import sc.engine.engines.AbstractEngine.SearchMode;
+import sc.testing.EngineFactory;
 import sc.util.ObjectPool.Factory;
 
 public class UCI {
@@ -24,7 +18,13 @@ public class UCI {
 	BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 	SearchEngine engine;
 	EngineBoard board = new EBitBoard(); // Create a board on which we will be
-
+	Factory<SearchEngine> factory;
+	
+	public UCI(Factory<SearchEngine> factory) {
+		this.factory = factory;
+		this.engine = factory.create();
+	}
+	
 	public UCI(SearchEngine se) {
 		this.engine = se;
 	}
@@ -67,6 +67,7 @@ public class UCI {
 			// position
 			if ("ucinewgame".equals(command)) {
 				board = new EBitBoard();
+				engine = factory.create();
 				searchDepth = 0;
 				movetime = 0;
 			}
@@ -143,11 +144,13 @@ public class UCI {
 					try {
 						searchDepth = Integer.parseInt(command.substring(9));
 					} catch (NumberFormatException ex) {
+						ex.printStackTrace();
 					}
 				} else if ("movetime".equals(command.substring(3, 11))) {
 					try {
 						movetime = Integer.parseInt(command.substring(12));
 					} catch (NumberFormatException ex) {
+						ex.printStackTrace();
 					}
 				} else // Extract the times since it's not infinite time
 						// controls
@@ -180,17 +183,23 @@ public class UCI {
 
 				int engineTime;
 				int engineInc;
+				int oppTime;
+				int oppInc;
 				if (board.getWhiteToMove()) {
 					engineTime = wtime;
 					engineInc = winc;
+					oppTime = btime;
+					oppInc = binc;
 				} else {
 					engineTime = btime;
 					engineInc = binc;
+					oppTime = wtime;
+					oppInc = winc;
 				}
 
 				Continuation bestLine = null;
 				bestLine = engine.search(board, searchDepth, engineTime,
-						engineInc, movetime);
+						engineInc, movetime, oppTime, oppInc);
 				if (bestLine.line[0] != 0) // We have found a move to make
 				{
 					board.makeMove(bestLine.line[0], false); // Make best move
@@ -306,7 +315,6 @@ public class UCI {
 		System.out.print("\n->");
 		for (;;) {
 			String command = reader.readLine();
-
 			if (command.equals("uci")) {
 				uci();
 				break;
@@ -362,8 +370,8 @@ public class UCI {
 						System.out.println("Depth needs to be higher than 0.");
 					else {
 						long time = System.currentTimeMillis();
-						engine.search(board,
-								Integer.parseInt(command.substring(8)), 0, 0, 0);
+						engine.searchByDepth(board,
+								Integer.parseInt(command.substring(8)));
 						System.out.println("Time: "
 								+ DPerft.convertMillis((System
 										.currentTimeMillis() - time)));
@@ -380,7 +388,7 @@ public class UCI {
 						System.out.println("Time needs to be higher than 0.");
 					else {
 						long time = System.currentTimeMillis();
-						engine.search(board, 0, 0, 0,
+						engine.searchByTime(board, 
 								Integer.parseInt(command.substring(8)));
 						System.out.println("Time: "
 								+ DPerft.convertMillis((System
@@ -413,58 +421,7 @@ public class UCI {
 		}
 	}
 
-	public static class EFactory implements Factory<SearchEngine> {
-		
-		private Class<?> type;
-		private boolean lmr; // late move reductions
-		private boolean nm;  // null moves
-		private boolean fp;  // futility pruning
-
-		public EFactory(Class<?> type, boolean lmr, boolean nm, boolean fp) {
-			this.type = type;
-			this.lmr = lmr;
-			this.nm = nm;
-			this.fp = fp;
-		}
-		@Override
-		public SearchEngine create() {
-			String name = getName(type, lmr, nm, fp);
-			if (type == IDAspWinEngine.class) {
-				return new IDAspWinEngine(name, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter(), 200, lmr, nm, true, true, fp);
-			} else if (type == MTDFEngine.class) {
-				return new MTDFEngine(name, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter(), lmr, nm, true, true, fp);
-			} else if (type == MTDFBinaryEngine.class) {
-				return new MTDFBinaryEngine(name, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter(), lmr, nm, true, true, fp);
-			} else if (type == MTDFHybridEngine.class) {
-				return new MTDFHybridEngine(name, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter(), lmr, nm, true, true, fp);
-			}
-			throw new RuntimeException("Unknown engine class: " + type);
-//			return new NFullQuiescenceEngine("NFullQuiescence", new SideToMoveEvaluator(), 1000);
-			
-//			
-		}
-		
-		static public String getName(Class<?> type, boolean lmr, boolean nm, boolean fp) {
-			String cname = type.getName();
-			int lastDot = cname.lastIndexOf(".");
-			String name = cname.substring(lastDot+1);
-			name += "-" + (lmr? "" : "no");
-			name += "LMR";
-			name += "-";
-			name += "-" + (nm? "" : "no");
-			name += "NM";
-			name += "-" + (fp? "" : "no");
-			name += "FP";
-			return name;
-			
-		}
-
-		@Override
-		public SearchEngine[] getArray(int size) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
+	
 
 	/**
 	 * @param args
@@ -472,30 +429,28 @@ public class UCI {
 	public static void main(String[] args) {
 //		SearchEngine 
 		try {
-			SearchEngine se = null;
-			if (args.length == 0) {
-				se = new NFullQuiescenceEngine("NFull", new SideToMoveEvaluator(), 8);
-			} else if (args.length == 4) {
-				Class<?> clz = null;
+			if (args.length >= 1) {
+				SearchMode clz = null;
+				EngineFactory ef = null;
 				String engineClass = args[0];
 				if (engineClass.startsWith("IDAsp")) {
-					clz = IDAspWinEngine.class;
+					clz = SearchMode.ASP_WIN;
 				} else if (engineClass.startsWith("MTDFBinary")) {
-					clz = MTDFBinaryEngine.class;
+					clz = SearchMode.BIN_MTDF;
 				} else if (engineClass.startsWith("MTDFEngine")) {
-					clz = MTDFEngine.class;
+					clz = SearchMode.MTDF;
 				} else if (engineClass.startsWith("MTDFHybrid")) {
-					clz = MTDFHybridEngine.class;
+					clz = SearchMode.HYBRID_MTDF;
 				}
-				boolean lmr = "true".equals(args[1]);
-				boolean nm = "true".equals(args[2]);
-				boolean fp = "true".equals(args[3]);
-				EFactory ef = new EFactory(clz, lmr, nm, fp);
-				se = ef.create();
+				if (args.length >= 2) {
+					ef = new EngineFactory(clz, true, true, true, false, true, true, true);
+				} else {
+					ef = new EngineFactory(clz);
+				}
+				new UCI(ef).lineInput();
 			} else {
 				throw new RuntimeException("Incorrect number of args");
 			}
-			new UCI(se).lineInput();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

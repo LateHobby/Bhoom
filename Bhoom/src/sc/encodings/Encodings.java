@@ -107,6 +107,10 @@ public class Encodings {
 		return (square < 0 || square >= 64);
 	}
 	
+	static public boolean isWhiteSquare(short square) {
+		return (square % 2 == 1);
+	}
+	
 	static public String getNotation(short square) {
 		int file = getFile(square);
 		int rank = getRank(square);

@@ -24,7 +24,7 @@ public interface SearchEngine {
 	Continuation searchByTime(EngineBoard board, long msTime);
 
 	public Continuation search(EngineBoard board, int depth, int engineTime,
-			int engineInc, int movetime);
+			int engineInc, int movetime, int oppTime, int oppInc);
 
 	public EngineStats getEngineStats();
 

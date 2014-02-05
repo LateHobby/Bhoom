@@ -100,9 +100,13 @@ public class TestingUtils {
 		String[] sa = line.split(";");
 		String[] fa = sa[0].split("bm");
 		String fen = fa[0] + "0 0";
-		String moves = fa[1];
-		String name = sa[1].substring(sa[1].indexOf("\"") + 1, sa[1].lastIndexOf("\""));
-		int[] marr = parseMoves(moves, fen, board);
+		String name = "";
+		int[] marr = new int[1];
+		if (fa.length > 1) {
+			String moves = fa[1];
+			name = sa[1].substring(sa[1].indexOf("\"") + 1, sa[1].lastIndexOf("\""));
+			marr = parseMoves(moves, fen, board);
+		}
 		return new EPDTest(name, fen, marr);
 	}
 
@@ -110,6 +114,9 @@ public class TestingUtils {
 		moves = moves.trim();
 		BoardUtils.initializeBoard(board, fen);
 		String[] ma = moves.split("\\s+");
+		if (ma.length == 0) {
+			return new int[1];
+		}
 		int[] results = new int[ma.length];
 		int rindex = 0;
 		for (String pm : ma) {
@@ -214,9 +221,10 @@ public class TestingUtils {
 	      }
 	   }
 	static public class EPDTest {
-		String name;
-		String fen;
-		int[] solution;
+		public String name;
+		public String fen;
+		public int[] solution;
+		public int eval;
 		
 		public EPDTest(String name, String fen, int[] solution) {
 			super();

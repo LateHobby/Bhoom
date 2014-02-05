@@ -25,17 +25,19 @@ import sc.engine.EngineStats;
 import sc.engine.Evaluator;
 import sc.engine.SearchEngine;
 import sc.engine.ThinkingListener;
-import sc.engine.engines.IDAspWinEngine;
-import sc.engine.engines.MTDFEngine;
+import sc.engine.engines.AbstractEngine.SearchMode;
+import sc.engine.engines.CTestEngine;
+import sc.engine.movesorter.MvvLvaHashSorter;
 import sc.engine.movesorter.SeeHashSorter;
 import sc.engine.ttables.AlwaysReplace;
 import sc.evaluators.SideToMoveEvaluator;
 import sc.gui.ChessBoardPanel;
 import sc.gui.ChessboardListener;
 import sc.gui.ThinkingPanel;
-import sc.testing.ExternalUCI;
-import sc.testing.ExternalUCIEngine;
 import sc.util.BoardUtils;
+import sc.util.ExternalUCI;
+import sc.util.ExternalUCIEngine;
+import sc.util.PrintUtils;
 import sc.util.TextTransfer;
 import sc.visualdebug.SearchTreeBuilder;
 import sc.visualdebug.SearchTreePanel;
@@ -87,6 +89,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 		configureBoard();
 		fr.pack();
 		fr.setVisible(true);
+		
 	}
 
 	private Component fenComponent() {
@@ -96,6 +99,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 			public void actionPerformed(ActionEvent arg0) {
 				BoardUtils.initializeBoard(board, fenField.getText());
 				BoardUtils.initializeBoard(guiboard, fenField.getText());
+				configureBoard();
 				frame.repaint();
 
 			}
@@ -166,17 +170,21 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 			return 0;
 		}
 		tpan.clear();
-		final int move = engine.searchByDepth(board, 7).line[0];
+		final int move = engine.searchByDepth(board, 6).line[0];
 		// final int move = eng.searchByTime(board, 10000).line[0];
 		if (move != 0) {
-			board.makeMove(move, false);
+			if (board.makeMove(move, true)) {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
 					showMoveOnBoard(move);
 				}
 			});
+			} else {
+				System.err.println("Illegal move: " + PrintUtils.notation(move));
+			}
 		} else {
+			System.err.println("Zero move");
 //			throw new RuntimeException("Zero move!");
 		}
 
@@ -221,9 +229,11 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 		}
 		stb.fen = BoardUtils.getFen(board);
 		engine.setListener(stb);
+		((CTestEngine) engine).listen = true;
 		stb.startSearch();
 		playMove();
 		engine.setDefaultListener();
+		((CTestEngine) engine).listen = false;
 
 		SearchTreePanel span = new SearchTreePanel();
 		span.setPreferredSize(new Dimension(1200, 500));
@@ -246,23 +256,23 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 		cpan.setAcceptMouseMoves(!engineToMove);
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 
-		// SearchEngine white = new GEngine("white", new MaxPlayerEvaluator(),
-		// 2);
 		SideToMoveEvaluator sev9111 = new SideToMoveEvaluator();
 //		sev9111.setWeights(1, 1, 1, 1);
-		SideToMoveEvaluator sev0000 = new SideToMoveEvaluator();
-		sev0000.setWeights(0, 1, 1, 0);
-//		SearchEngine black = new MTDFEngine("mtdf", sev9111,
-//				new AlwaysReplace(), new SeeHashSorter(), true, true, true, true, true);
-//		SearchEngine black = new IDAspWinEngine("idAsp", sev9111, new
-//				AlwaysReplace(), new SeeHashSorter(), 200, true, true, true, true, true);
+//		SearchEngine black = new CTestEngine("mtdf", SearchMode.MTDF, sev9111,
+//				new AlwaysReplace(), new SeeHashSorter());
+		SearchEngine black = new CTestEngine("idAsp", SearchMode.ASP_WIN, 200, sev9111, new
+				AlwaysReplace(), new MvvLvaHashSorter());
 
-		SearchEngine black = new UCIWrapper(new ExternalUCIEngine("java", "-Xmx1024M", "-jar", "C:\\Users\\Shiva\\chess-2013\\Flux-2.2.1.jar"));
+		((CTestEngine)black).setFlags(true, true, true, false, true, true, true);
+		
+//		SearchEngine black = new UCIWrapper(new ExternalUCIEngine("BhoomMtdBin.bat"));
+
+//		SearchEngine black = new UCIWrapper(new ExternalUCIEngine(
+//				"C:\\Program Files (x86)\\Arena\\Engines\\Rybka\\Rybka v2.2n2.mp.x64.exe"));
 		
 		HumanVsEngine eve = new HumanVsEngine(black,false);
-		// eve.playGame(board, white, black, pan, guiboard);
 
 	}
 
@@ -306,7 +316,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 
 		@Override
 		public void setThinkingListener(ThinkingListener listener) {
-			// TODO Auto-generated method stub
+			uci.setThinkingListener(listener);
 			
 		}
 
@@ -315,6 +325,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 			uci.getBestMove(board, searchDepth, 1000000);
 			Continuation c = new Continuation();
 			c.line[0] = uci.getMove();
+			System.out.println("BestMove encoded:" + PrintUtils.notation(c.line[0]));
 			return c;
 		}
 
@@ -326,7 +337,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 
 		@Override
 		public Continuation search(EngineBoard board, int depth,
-				int engineTime, int engineInc, int movetime) {
+				int engineTime, int engineInc, int movetime, int oppTime, int oppInc) {
 			// TODO Auto-generated method stub
 			return null;
 		}

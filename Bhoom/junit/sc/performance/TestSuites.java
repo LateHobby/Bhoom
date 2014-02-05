@@ -12,9 +12,12 @@ import org.junit.Test;
 import sc.bboard.EBitBoard;
 import sc.encodings.Encodings;
 import sc.engine.EngineBoard;
-import sc.engine.NFullQuiescenceEngine;
 import sc.engine.SearchEngine;
 import sc.engine.SearchEngine.Continuation;
+import sc.engine.engines.AbstractEngine.SearchMode;
+import sc.engine.engines.CTestEngine;
+import sc.engine.movesorter.SeeHashSorter;
+import sc.engine.ttables.AlwaysReplace;
 import sc.evaluators.SideToMoveEvaluator;
 import sc.util.BoardUtils;
 import sc.util.ParseUtils;
@@ -32,7 +35,7 @@ public class TestSuites {
 	
 	
 	private SearchEngine getEngine() {
-		return new NFullQuiescenceEngine("Test", new SideToMoveEvaluator(), 7);
+		return new CTestEngine("test", SearchMode.ASP_WIN, 200, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter());
 	}
 	
 	private class Benchmark {

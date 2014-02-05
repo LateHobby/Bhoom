@@ -18,9 +18,6 @@ public class EBitBoard implements EngineBoard {
 	
 	public PositionInfo posInfo = new PositionInfo();
 	
-//	public OneSidePositionInfo wConfig = new OneSidePositionInfo(true);
-//	public OneSidePositionInfo bConfig = new OneSidePositionInfo(false);
-	
 	byte[] pieces = new byte[64];
 	
 	public long zobristKey = 0L;
@@ -122,8 +119,13 @@ public class EBitBoard implements EngineBoard {
 		hashHistory.clear();
 		pawnHashHistory.clear();
 		
+		zobristKey = 0L;
+		wpawnzobristkey = 0L;
+		bpawnzobristkey = 0L;
+		
 		posInfo.wConfig.initialize();
 		posInfo.bConfig.initialize();
+		positionInfoUpToDate = false;
 		
 		GameState oldGameState = gameState;
 		gameState = statePool.allocate();
@@ -522,7 +524,12 @@ public class EBitBoard implements EngineBoard {
 
 	@Override
 	public boolean drawByRepetition() {
-		return hashHistory.getCount(zobristKey) > 2;
+		return hashHistory.getCount(zobristKey) >= 2;
+	}
+
+	@Override
+	public boolean drawByInsufficientMaterial() {
+		return posInfo.drawByInsufficientMaterial();
 	}
 
 	

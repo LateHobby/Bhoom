@@ -15,7 +15,10 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JLabel;
@@ -204,7 +207,7 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 		
 	}
 
-	private void configureBoard(Node node) {
+	private void configureBoardOrig(Node node) {
 		
 		if (builder.fen != null) {
 			BoardUtils.initializeBoard(board, builder.fen);
@@ -229,7 +232,9 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 						seeEval = see.evaluateMove(board, moves[i], evalPanel.eval);
 					}
 				} catch (Throwable t) {
-					System.out.printf("Exception at move %d", moves[i]);
+					System.out.printf("Exception at move %s\n", PrintUtils.notation(moves[i]));
+					System.out.println(BoardUtils.getFen(board));
+					t.printStackTrace();
 				}
 			}
 			if (moves[i] == 0) {
@@ -241,6 +246,56 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 		evalPanel.evaluate(board, seeEval);
 	}
 	
+	private void configureBoard(Node node) {
+		
+		if (builder.fen != null) {
+			BoardUtils.initializeBoard(board, builder.fen);
+		} else {
+			board.initializeStandard();
+		}
+		if (node.parent == null) {
+			return;
+		}
+		List<Node> path = new ArrayList<Node>();
+		path.add(node);
+		while (node.parent != null) {
+			node = node.parent;
+			path.add(node);
+		}
+		Collections.reverse(path);
+		int seeEval = 0;
+		int index = 0;
+		for (Node n : path) {
+			if (n.parent != null) {
+				if (n.lastMove == 0) {
+					board.makeNullMove();
+				} else {
+					if (index < path.size()-1) {
+						board.makeMove(n.lastMove, false);
+					} else {
+						int move = n.lastMove;
+						try {
+							if (move != 0) {
+								seeEval = see.evaluateMove(board, move, evalPanel.eval);
+								board.makeMove(n.lastMove, false);
+							} else {
+								board.makeNullMove();
+							}
+						} catch (Throwable t) {
+							System.out.printf("Exception at move %s\n", PrintUtils.notation(move));
+							System.out.println(BoardUtils.getFen(board));
+							t.printStackTrace();
+						}
+					}
+				}
+			}
+		index++;
+		}
+		
+		
+		evalPanel.evaluate(board, seeEval);
+	}
+
 	private String getNodeDescription(Node node) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html><body><h2>");
@@ -259,6 +314,8 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 		sb.append("futilityPruned=" + node.futilityPrune);
 		sb.append("<br/>");
 		sb.append("teval=" + node.teval);
+		sb.append("<br/>");
+		sb.append("staticEval=" + node.staticEval);
 		sb.append("<br/>");
 		sb.append("mvp=" + node.mvp);
 		sb.append("<br/>");
@@ -432,6 +489,7 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 		private Evaluator eval;
 		private JLabel[] evalComponents;
 		private String[] evalNames;
+		private JLabel total = new JLabel();
 		private JLabel seeVal = new JLabel();
 		EvalPanel() {
 			
@@ -439,9 +497,12 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 		
 		public void evaluate(EngineBoard board, int seeEval) {
 			int[] comps = eval.evalComponents(board);
+			int sum = 0;
 			for (int i = 0; i < comps.length; i++) {
 				evalComponents[i].setText(evalNames[i] + ": " + comps[i]);
+				sum += comps[i];
 			}
+			total.setText("StaticEval:" + sum);
 			seeVal.setText("SeeEval: " + seeEval);
 		}
 		public void setEvaluator(Evaluator eval) {
@@ -453,11 +514,12 @@ public class SearchTreePanel extends JPanel implements MouseListener {
 			removeAll();
 			evalNames = eval.evalNames();
 			evalComponents = new JLabel[evalNames.length];
-			setLayout(new GridLayout(evalComponents.length + 1, 1));
+			setLayout(new GridLayout(evalComponents.length + 2, 1));
 			for (int i = 0; i < evalComponents.length; i++) {
 				evalComponents[i] = new JLabel(evalNames[i]);
 				add(evalComponents[i]);
 			}
+			add(total);
 			add(seeVal);
 			setSize(getPreferredSize());
 			getParent().doLayout();

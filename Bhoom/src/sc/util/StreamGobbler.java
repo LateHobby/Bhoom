@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sc.testing;
+package sc.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

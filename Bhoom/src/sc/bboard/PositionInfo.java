@@ -1,7 +1,14 @@
 package sc.bboard;
 
-public class PositionInfo {
+import java.io.Serializable;
 
+public class PositionInfo implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8056671305910572696L;
+	
 	public OneSidePositionInfo wConfig = new OneSidePositionInfo(true);
 	public OneSidePositionInfo bConfig = new OneSidePositionInfo(false);
 
@@ -22,12 +29,15 @@ public class PositionInfo {
 		// update pins and checks
 		wConfig.updatePinsAndChecks(bConfig);
 		bConfig.updatePinsAndChecks(wConfig);
-
 	}
 
 	public void setTo(PositionInfo other) {
 		wConfig.setTo(other.wConfig);
 		bConfig.setTo(other.bConfig);
 		
+	}
+
+	public boolean drawByInsufficientMaterial() {
+		return !(wConfig.hasMaterialToWin || bConfig.hasMaterialToWin);
 	}
 }

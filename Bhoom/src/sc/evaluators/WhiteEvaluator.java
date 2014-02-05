@@ -104,7 +104,7 @@ public class WhiteEvaluator extends AbstractEvaluator {
 	}
 	
 	/**
-	 * If the side to move's king's movement is restricted, that's good.
+	 * If black's king's movement is restricted, that's good.
 	 * @param wConfig
 	 * @param bConfig
 	 * @param whiteToMove

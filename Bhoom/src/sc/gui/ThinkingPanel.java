@@ -44,15 +44,25 @@ public class ThinkingPanel extends JPanel {
 			return;
 		}
 		RowElement re = new RowElement();
-		re.eval = Integer.parseInt(sa[3]);
-		re.depth = Integer.parseInt(sa[5]);
-		re.nodes = Integer.parseInt(sa[7]);
-		re.nodesPerSec = Integer.parseInt(sa[9]);
-		re.time = Integer.parseInt(sa[11]);
-		re.continuation = BoardUtils.convertToPGNString(board, sa, 13, sa.length);
-		model.rows.add(re);
-		
-		model.fireTableDataChanged();
+		for (int i = 1; i < sa.length; i++) {
+			if ("depth".equals(sa[i])) {
+				re.depth = Integer.parseInt(sa[i+1]);
+			} else if ("cp".equals(sa[i])) {
+				re.eval = Integer.parseInt(sa[i+1]);
+			} else if ("nodes".equals(sa[i])) {
+				re.nodes = Integer.parseInt(sa[i+1]);
+			} else if ("nps".equals(sa[i])) {
+				re.nodesPerSec = Integer.parseInt(sa[i+1]);
+			} else if ("time".equals(sa[i])) {
+				re.time = Integer.parseInt(sa[i+1]);
+			} else if ("pv".equals(sa[i])) {
+				re.continuation = BoardUtils.convertToPGNString(board, sa, i+1, sa.length);
+			}
+		}
+		if (re.continuation != null) {
+			model.rows.add(re);
+			model.fireTableDataChanged();
+		}
 		
 	}
 	

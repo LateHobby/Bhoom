@@ -19,8 +19,8 @@ import javax.swing.SwingUtilities;
 import sc.bboard.EBitBoard;
 import sc.engine.EngineBoard;
 import sc.engine.SearchEngine;
-import sc.engine.engines.IDAspWinEngine;
-import sc.engine.engines.MTDFEngine;
+import sc.engine.engines.AbstractEngine.SearchMode;
+import sc.engine.engines.CTestEngine;
 import sc.engine.movesorter.SeeHashSorter;
 import sc.engine.ttables.AlwaysReplace;
 import sc.evaluators.SideToMoveEvaluator;
@@ -218,17 +218,10 @@ public class EngineVsEngine {
 
 	public static void main(String[] args) {
 		
-//		SearchEngine white = new GEngine("white", new MaxPlayerEvaluator(), 2);
 		SideToMoveEvaluator sev9111 = new SideToMoveEvaluator();
 		sev9111.setWeights(1,1,1,1);
-		SideToMoveEvaluator sev0000 = new SideToMoveEvaluator();
-		sev0000.setWeights(0,1,1,0);
-//		SearchEngine white = new BaseNegamaxEngine("white", sev9111, 7);
-//		SearchEngine black = new NFullQuiescenceEngine("black", sev9111, 7);
-//		SearchEngine white = new NFullQuiescenceEngine("nfullq", sev9111, 7);
-		SearchEngine black = new MTDFEngine("mtdf", sev9111, new AlwaysReplace(), new SeeHashSorter(), true, true, true, true, true);
-//		SearchEngine black = new IDAspWinEngine("idAsp", sev9111, new AlwaysReplace(), 50);
-		SearchEngine white = new IDAspWinEngine("idAspSee", sev9111, new AlwaysReplace(), new SeeHashSorter(), 50, true, true, true, true, true);
+		SearchEngine black = new CTestEngine("mtdf", SearchMode.MTDF, sev9111, new AlwaysReplace(), new SeeHashSorter());
+		SearchEngine white = new CTestEngine("idAspSee", SearchMode.ASP_WIN, 200, sev9111, new AlwaysReplace(), new SeeHashSorter());
 		
 
 		EngineVsEngine eve = new EngineVsEngine(white, black);

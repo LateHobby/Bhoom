@@ -1,11 +1,19 @@
 package sc.bboard;
 
+import java.io.Serializable;
+import java.util.Arrays;
+
 import sc.encodings.EConstants;
 import sc.encodings.Encodings;
 import sc.util.BitManipulation;
 import sc.util.PrintUtils;
 
-public class OneSidePositionInfo {
+public class OneSidePositionInfo implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2854471429543182527L;
 
 	private byte king;
 
@@ -17,6 +25,7 @@ public class OneSidePositionInfo {
 	public long all_occ;
 
 	public byte most_valuable_piece;
+	public boolean hasMaterialToWin;
 	
 	// includes king attacks
 	public long[] figure_attacks = new long[64];
@@ -82,6 +91,12 @@ public class OneSidePositionInfo {
 	}
 
 	public void updateAttacks(OneSidePositionInfo enemy) {
+		System.arraycopy(zeroArray, 0, figure_attacks, 0, zeroArray.length);
+		
+		boolean hasWhiteBishop = false;
+		boolean hasBlackBishop = false;
+		hasMaterialToWin = false;
+		
 		long enemy_occ = enemy.all_occ;
 		
 		long combined_occ = all_occ | enemy_occ;
@@ -96,6 +111,7 @@ public class OneSidePositionInfo {
 
 		occ = occ_boards[1]; // queen
 		while (occ != 0) {
+			hasMaterialToWin = true;
 			long loc = Long.lowestOneBit(occ);
 			short square = (short) Long.numberOfTrailingZeros(loc);
 			figure_attacks[square] = FMoves.queenAttacks(square, combined_occ);
@@ -105,6 +121,7 @@ public class OneSidePositionInfo {
 
 		occ = occ_boards[2]; // rook
 		while (occ != 0) {
+			hasMaterialToWin = true;
 			long loc = Long.lowestOneBit(occ);
 			short square = (short) Long.numberOfTrailingZeros(loc);
 			figure_attacks[square] = FMoves.rookAttacks(square, combined_occ);
@@ -116,6 +133,11 @@ public class OneSidePositionInfo {
 		while (occ != 0) {
 			long loc = Long.lowestOneBit(occ);
 			short square = (short) Long.numberOfTrailingZeros(loc);
+			if (Encodings.isWhiteSquare(square)) {
+				hasWhiteBishop = true;
+			} else {
+				hasBlackBishop = true;
+			}
 			figure_attacks[square] = FMoves.bishopAttacks(square, combined_occ);
 			all_attacks |= figure_attacks[square];
 			occ &= ~loc;
@@ -123,6 +145,9 @@ public class OneSidePositionInfo {
 
 		occ = occ_boards[4]; // knight
 		while (occ != 0) {
+			if (hasWhiteBishop || hasBlackBishop) {
+				hasMaterialToWin = true;
+			}
 			long loc = Long.lowestOneBit(occ);
 			short square = (short) Long.numberOfTrailingZeros(loc);
 			figure_attacks[square] = FMoves.knightAttacks(square);
@@ -134,12 +159,14 @@ public class OneSidePositionInfo {
 		pawn_pushes = FMoves.pawnPushes(pawn_occ, combined_occ, white);
 		all_attacks |= pawn_attacks;
 
-		
+		hasMaterialToWin |= (pawn_occ != 0L);
 		
 
 	}
 
 	public void updatePinsAndChecks(OneSidePositionInfo enemy) {
+//		System.arraycopy(zeroArray, 0, enemy.pin_blocking_squares, 0, zeroArray.length);
+
 		long enemy_occ = enemy.all_occ;
 		long enemy_king_loc = enemy.occ_boards[0]; // king
 		
@@ -211,6 +238,7 @@ public class OneSidePositionInfo {
 
 	private void setBlockingSquaresAndCheckers(OneSidePositionInfo enemy, long loc,
 			short square, long enemy_king_loc, short enemy_king_square, long ray, long check_avoidance) {
+		
 		long pin_blocking_squares = ray & ~enemy_king_loc & ~loc; // Remove piece and king locs
 		
 		if (pin_blocking_squares != 0L && (pin_blocking_squares & all_occ) == 0L) {
@@ -220,7 +248,9 @@ public class OneSidePositionInfo {
 				int pin_square = Long.numberOfTrailingZeros(possible_pins);
 				enemy.pin_blocking_squares[pin_square] = (pin_blocking_squares | loc);
 				enemy.is_pinned |= possible_pins;
-			} 
+			} else { // these are not pinned
+				enemy.is_pinned &= ~possible_pins;
+			}
 		}
 		if ((figure_attacks[square] & enemy_king_loc) != 0L) { // the figure is giving check
 			checkers |= loc;
@@ -235,6 +265,8 @@ public class OneSidePositionInfo {
 
 	}
 
+	static private long[] zeroArray = new long[64];
+	
 	static public long[][] rook_rays = new long[64][64];
 	static public long[][] bishop_rays = new long[64][64];
 	static public long[][] queen_rays = new long[64][64];
@@ -245,6 +277,7 @@ public class OneSidePositionInfo {
 	
 	static {
 		generateRays();
+		Arrays.fill(zeroArray, 0L);
 	}
 	
 	static void generateRays() {
@@ -361,6 +394,7 @@ public class OneSidePositionInfo {
 	}
 
 	public void setTo(OneSidePositionInfo other) {
+		initialize();
 		king = other.king;
 		white = other.white;
 		for (int i = 0; i < occ_boards.length; i++) {

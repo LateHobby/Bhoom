@@ -161,7 +161,7 @@ abstract public class AbstractEngine implements SearchEngine {
 		}
 		maxDepthAllowed = (depth <= 0) ? 1000 : depth;
 		thisMoveStart = System.currentTimeMillis();
-		System.out.printf("MaxDepthAllowed:%d\n", maxDepthAllowed);
+		System.out.printf("MaxDepthAllowed:%d TimeForMove:%d\n", maxDepthAllowed, timeAllowed);
 		traceStartSearch();
 		if (timeAllowed > 0) {
 			return searchByTime(board, timeAllowed);

@@ -555,7 +555,7 @@ public class TestEBitBoard {
 	}
 	
 	@Test
-	public void testDrawRecognition() {
+	public void test3MoveDrawRecognition() {
 		EBitBoard board = new EBitBoard();
 		String fen = "6k1/2p5/2n1p2p/4P1p1/1p3nP1/3pKP2/rB6/3N4 b - - 0 35";
 		BoardUtils.initializeBoard(board, fen);
@@ -570,6 +570,17 @@ public class TestEBitBoard {
 		}
 		
 		assertTrue("Draw Not recognized" , board.drawByRepetition());
+
+	}
+	
+	@Test
+	public void testInsufficientMaterialDrawRecognition() {
+		EBitBoard board = new EBitBoard();
+		String fen = "8/8/2k2K2/8/8/8/8/8 b - - 0 53";
+		BoardUtils.initializeBoard(board, fen);
+		
+		
+		assertTrue("Draw Not recognized" , board.drawByInsufficientMaterial());
 
 	}
 	

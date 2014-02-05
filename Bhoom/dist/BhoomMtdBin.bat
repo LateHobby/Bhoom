@@ -8,4 +8,3 @@ java -Xmx1024M  ^
  -DfutilityPruning=true ^
  -cp bhoom.jar sc.util.UCI MTDFBinaryEngine 
 
-java -Xmx1024M -cp build/bhoom.jar sc.util.UCI MTDFBinaryEngine 

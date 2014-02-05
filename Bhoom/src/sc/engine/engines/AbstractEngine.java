@@ -52,7 +52,7 @@ abstract public class AbstractEngine implements SearchEngine {
 	protected SearchMode mode;
 	
 	protected int ASP_WIN = 200; // default value
-	protected Continuation[] evalByDepth = new Continuation[100];
+	protected Continuation[] evalByDepth = new Continuation[500];
 	
 	protected boolean abandonSearch;
 	protected int maxDepthAllowed;

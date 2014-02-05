@@ -64,10 +64,5 @@ public class CEngine extends AbstractEngine {
 		return useFutilityPruning;
 	}
 
-	@Override
-	protected Continuation search(EngineBoard board) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

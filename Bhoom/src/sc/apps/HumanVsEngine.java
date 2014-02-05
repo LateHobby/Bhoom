@@ -170,7 +170,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 			return 0;
 		}
 		tpan.clear();
-		final int move = engine.searchByDepth(board, 6).line[0];
+		final int move = engine.searchByDepth(board, 5).line[0];
 		// final int move = eng.searchByTime(board, 10000).line[0];
 		if (move != 0) {
 			if (board.makeMove(move, true)) {

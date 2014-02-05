@@ -37,6 +37,7 @@ public class CompareAgainstExternal {
 		this.uci = uci;
 		uci.startup();
 		uci.send("setoption name MultiPV value 1");
+		uci.send("setoption name Ponder value false");
 	}
 	
 	public void runSuite(File suiteFile, PrintStream stream) throws Exception {
@@ -85,7 +86,7 @@ public class CompareAgainstExternal {
 			System.out.println(sres.fen);
 			System.out.printf("Engine: %s [%d]  External: %s [%d]\n", 
 					PrintUtils.notation(sres.engineMove), sres.externalEvalForEngineMove,
-					PrintUtils.notation(sres.externalBestMove), sres.externalBestMove);
+					PrintUtils.notation(sres.externalBestMove), sres.externalBestEval);
 			
 			
 		}
@@ -170,7 +171,7 @@ public class CompareAgainstExternal {
 		final EngineSetting setting = new EngineSetting();
 		setting.depth = 6;
 		setting.timeMs = 0;
-		final EngineFactory ef = new EngineFactory(SearchMode.MTDF, true, true, true, false, true, true, true);
+		final EngineFactory ef = new EngineFactory(SearchMode.ASP_WIN, true, true, true, false, true, true, true);
 		ExternalUCIEngine uci = new ExternalUCIEngine(
 		"C:\\Program Files (x86)\\BabasChess\\Engines\\toga\\togaII.exe");
 		CompareAgainstExternal cae = new CompareAgainstExternal(ef, setting, uci);

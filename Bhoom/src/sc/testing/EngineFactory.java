@@ -58,7 +58,7 @@ public class EngineFactory implements Factory<SearchEngine>{
 		if (mode == SearchMode.ASP_WIN) {
 			engine = new CEngine(name, mode, aspWin, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
 		} else if (mode == SearchMode.MTDF || mode == SearchMode.BIN_MTDF || mode == SearchMode.HYBRID_MTDF) {
-			engine = new CEngine(name, mode, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter());
+			engine = new CEngine(name, mode, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
 		} 
 		if (engine == null) {
 			throw new RuntimeException("Unknown engine class: " + mode);
@@ -72,7 +72,7 @@ public class EngineFactory implements Factory<SearchEngine>{
 		if (mode == SearchMode.ASP_WIN) {
 			engine = new CTestEngine(name, mode, aspWin, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
 		} else if (mode == SearchMode.MTDF || mode == SearchMode.BIN_MTDF || mode == SearchMode.HYBRID_MTDF) {
-			engine = new CTestEngine(name, mode, new SideToMoveEvaluator(), new AlwaysReplace(), new SeeHashSorter());
+			engine = new CTestEngine(name, mode, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
 		} 
 		if (engine == null) {
 			throw new RuntimeException("Unknown engine class: " + mode);

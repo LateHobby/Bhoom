@@ -28,7 +28,7 @@ public class PrintUtils {
 		String not = notation(from) + notation(to);
 		byte promotionPiece = Encodings.getPieceToPromoteTo(move);
 		if (Encodings.isPiece(promotionPiece)) {
-			not = not + FENInfo.pieceToFenChar(promotionPiece);
+			not = not + Character.toLowerCase(FENInfo.pieceToFenChar(promotionPiece));
 		}
 		return not;
 	}

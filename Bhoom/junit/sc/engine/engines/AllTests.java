@@ -6,9 +6,10 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-    CorrectnessTests.class,
-    PositionalTests.class
-    
+    MinimaxTest.class,
+    AspWinFeaturesTest.class,
+    AspWinVsMtdTest.class,
+    MiscQualityAndPerformanceTests.class
 })
 
 public class AllTests {}

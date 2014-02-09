@@ -16,7 +16,7 @@ import sc.util.BitManipulation;
 public class WhiteEvaluator extends AbstractEvaluator {
 
 	private static PositionInfo initPositionInfo;
-	private static int[] staticPieceWeights = new int[]{800, 500, 300, 300, 100};
+//	private static int[] staticPieceWeights = new int[]{800, 500, 300, 300, 100};
 	private static int[] initPieceCount = new int[]{1, 2, 2, 2, 8};
 	
 	
@@ -35,6 +35,11 @@ public class WhiteEvaluator extends AbstractEvaluator {
 			fnWeights[index++] = wt;
 		}
 		
+	}
+	
+	@Override
+	public void reset() {
+	
 	}
 	
 	@Override
@@ -214,8 +219,9 @@ public class WhiteEvaluator extends AbstractEvaluator {
 	
 	private int getMaterial(OneSidePositionInfo config, byte queen, byte pawn) {
 		int material = 0;
+		
 		for (int i = 1; i <= 5; i++) { // 1=queen, 5= 
-			material += Long.bitCount(config.occ_boards[i]) * staticPieceWeights[i - 1];
+			material += Long.bitCount(config.occ_boards[i]) * STATIC_PIECE_WEIGHTS[i + 1];
 		}
 		return material;
 	}
@@ -254,14 +260,7 @@ public class WhiteEvaluator extends AbstractEvaluator {
 
 	@Override
 	public int pieceWeight(byte piece) {
-		if (piece == Encodings.EMPTY) {
-			return 0;
-		}
-		byte king = Encodings.isWhite(piece) ? Encodings.WKING : Encodings.BKING;
-		if (piece == king) {
-			return 1000;
-		}
-		return staticPieceWeights[piece - king - 1];
+		return STATIC_PIECE_WEIGHTS[piece];
 	}
 
 	

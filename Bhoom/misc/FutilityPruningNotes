@@ -1,0 +1,78 @@
+Futility pruning
+
+Consider a search that proceeds from depthLeft=2 to depthLeft=1 to depthLeft=0.
+Let the three nodes be n2, n1 and n0.
+At n2, let eval2, alpha2, beta2, static2 (static eval), victim2 (value of victim in move going
+from n2 to n1) and deltaPos2 (the change in the positional component of the evaluation function
+due to the move from n2 to n1) denote the relevant quantities. Similarly, at n1 and n0 define the same 
+notation with the subscripts appropriately changed.
+
+Let L(x) and U(x) denote lower and upper bounds on x.
+
+---------------------------------
+DepthLeft=1.
+
+We will derive a condition for alpha1 > -eval0, the alpha-cutoff condition.
+We have:
+eval0 >= static0 (the stand pat condition) and
+static0 = -(static1 + v1 + deltaPos1)
+which give:
+-eval0 <= -static0 = static1 + v1 + deltaPos1 <= static1 + v1 + U(deltaPos1)
+So if 
+alpha1 > static1 + v1 + U(deltaPos1), then this move is an alpha-cutoff.
+
+Further, since, static1 + v1 + deltaPos1 <= static1 + U(v1) + U(deltaPos1),
+and U(v1) = max attacked piece of opponent,
+if alpha1 > static1 + max attacked opponent piece + U(deltaPos1), then all moves
+are alpha cutoff.
+
+Note that max attacked piece < max piece, so we can substitute max piece in the
+above.
+-----------------------------
+DepthLeft = 2.
+
+We will derive a condition at n2 which will ensure that
+alpha1 > static1 + v1 + deltaPos1.
+Now
+static1 = -(static2 + v2 + deltaPos2)
+and alpha1 = -beta2, so
+alpha1 > static1 + v1 + deltaPos1   ... (1)
+is equivalent to
+-beta2 > -(static2 + v2 + deltaPos2) + v1 + deltaPos1
+or
+beta2 < static2 + v2 + deltaPos2 - v1 - deltaPos1   ...(2)
+
+So if 
+beta2 < L(static2 + v2 + deltaPos2 - v1 - deltaPos1)
+then (2) is true, and hence (1) is true.
+
+L(static2 + v2 + deltaPos2 - v1 - deltaPos1) = static2 + v2 + L(deltaPos2) - U(v1) - U(deltaPos1)
+and
+U(v1) = max attacked piece after n2->n1 move
+
+So the condition is:
+beta2 < static2 + v2 + L(deltaPos2) - max attacked piece after n2->n1 move - U(deltaPos1)
+
+Note that we can substitute max piece for max attacked piece in the above.
+
+We can generalize this to say:
+if 
+beta2 < static2 + 0 + L(deltaPos2) - max piece - U(deltaPos1)
+then all moves are beta-cutoff.
+
+---------------------------------------------------------------------------
+
+Null moves:
+
+Depth 1 node
+
+In the null-move cutoff phase we are only interested in seeing whether the null move gets us above beta.
+So, at n1, the question becomes
+beta1 > -eval0,
+which reduces to
+beta1 > static1 + v1 + deltaPos1
+But for the null move, v1 = 0 and deltaPos1 = 0, so we have:
+beta1 > static1 
+implies that this is not a null-move beta cutoff.
+
+

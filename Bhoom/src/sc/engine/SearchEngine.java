@@ -29,4 +29,6 @@ public interface SearchEngine {
 	public EngineStats getEngineStats();
 
 	public Evaluator getEvaluator();
+
+	void newGame();
 }

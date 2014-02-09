@@ -7,5 +7,7 @@ public interface MoveSorter {
 	void incrementHistoryHeuristicArray(int move, boolean increment);
 	
 	void addToKillerMoves(EngineBoard board, int distanceFromRoot, int move, int hashMove);
+
+	void reset();
 	
 }

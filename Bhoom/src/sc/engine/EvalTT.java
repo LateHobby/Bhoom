@@ -10,5 +10,7 @@ public interface EvalTT {
 	boolean retrieveFromTT(EngineBoard board, TTEntry stored);
 
 	Continuation getContinuation(EngineBoard board, int depth);
+
+	void reset();
 	
 }

@@ -25,6 +25,7 @@ public class OneSidePositionInfo implements Serializable {
 	public long all_occ;
 
 	public byte most_valuable_piece;
+	public byte most_valuable_attacked_piece;
 	public boolean hasMaterialToWin;
 	
 	// includes king attacks
@@ -44,6 +45,7 @@ public class OneSidePositionInfo implements Serializable {
 	// is allowed to move to without violating a pin
 	public long[] pin_blocking_squares = new long[64];
 	public long is_pinned;
+
 	
 
 	OneSidePositionInfo(boolean white) {
@@ -78,10 +80,10 @@ public class OneSidePositionInfo implements Serializable {
 		most_valuable_piece = Encodings.EMPTY;
 		for (int i = 1; i < 5; i++) {
 			all_occ |= occ_boards[i];
+			figure_occ |= occ_boards[i];
 			if (most_valuable_piece == Encodings.EMPTY && occ_boards[i] != 0L) {
 				most_valuable_piece = (byte) (king + i);
 			}
-			figure_occ |= occ_boards[i];
 		}
 		pawn_occ = occ_boards[5]; // pawns
 		all_occ |= pawn_occ;
@@ -90,6 +92,21 @@ public class OneSidePositionInfo implements Serializable {
 		}
 	}
 
+	public void updateMostValuableAttackedPiece(long enemyAttacks) {
+		most_valuable_attacked_piece = Encodings.EMPTY;
+		for (int i = 1; i < 5; i++) {
+			if (most_valuable_attacked_piece == Encodings.EMPTY && 
+					(occ_boards[i] & enemyAttacks) != 0L) {
+				most_valuable_attacked_piece = (byte) (king + i);
+				return;
+			}
+		}
+		if (most_valuable_attacked_piece == Encodings.EMPTY && 
+				(pawn_occ & enemyAttacks) != 0L) {
+			most_valuable_attacked_piece = white ? Encodings.WPAWN : Encodings.BPAWN;
+		}
+	}
+	
 	public void updateAttacks(OneSidePositionInfo enemy) {
 		System.arraycopy(zeroArray, 0, figure_attacks, 0, zeroArray.length);
 		

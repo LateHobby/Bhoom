@@ -22,6 +22,10 @@ public class PositionInfo implements Serializable {
 		// update king in check flag
 		wConfig.updateKingInCheck(bConfig.all_attacks);
 		bConfig.updateKingInCheck(wConfig.all_attacks);
+		// update most valuable attacked piece
+		wConfig.updateMostValuableAttackedPiece(bConfig.all_attacks);
+		bConfig.updateMostValuableAttackedPiece(wConfig.all_attacks);
+		
 	}
 
 	public void updateDerivedBoards() {

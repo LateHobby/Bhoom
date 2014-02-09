@@ -20,7 +20,7 @@ public class SearchTreeBuilder implements EngineListener {
 	@Override
 	public void enteredNode(int alpha, int beta, int depthLeft, int ply, int lastMove, int flags) {
 		Node n = new Node(depthLeft <= 0, alpha, beta, lastMove);
-		if (root == null) {
+		if (currentNode == null || root == null) {
 			root = n;
 		} else {
 			currentNode.add(n);

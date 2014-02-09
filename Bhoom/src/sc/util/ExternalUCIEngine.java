@@ -21,6 +21,7 @@ public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 	
 	int move;
 	int eval;
+	int nodes;
 	private Process proc;
 	private BufferedWriter bos;
 	private Object synchronizer = new Object();
@@ -58,6 +59,11 @@ public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 	}
 
 	@Override
+	public int getNodes() {
+		return nodes;
+	}
+	
+	@Override
 	public int getEval() {
 		return eval;
 	}
@@ -68,28 +74,32 @@ public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 	}
 
 	@Override
-	public void evaluateMove(EngineBoard board, int move, int depth, int timeMs) {
+	public int evaluateMove(EngineBoard board, int move, int depth, int timeMs) {
 		try {
 			send("ucinewgame");
 			send("isready");
 			waitfor("readyok");
 			String fen = BoardUtils.getFen(board);
 			BoardUtils.initializeBoard(localBoard, fen);
+			if (!localBoard.makeMove(move, true)) {
+				throw new RuntimeException("Invalid move");
+			}
+			fen = BoardUtils.getFen(localBoard);
 			send("position fen " + fen);
-			send(buildGoString(move, depth, timeMs));
+			send(buildGoString(depth - 1, timeMs));
 			waitfor("bestmove");
 			send("stop");
-
+			return -eval;
+			
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		
 	}
 	
 	
 
 	@Override
-	public void evaluatePosition(EngineBoard board, int depth, int timeMs) {
+	public int evaluatePosition(EngineBoard board, int depth, int timeMs) {
 		try {
 			send("isready");
 			waitfor("readyok");
@@ -98,9 +108,9 @@ public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 			send("position fen " + fen);
 			send(buildGoString(depth, timeMs));
 			waitfor("bestmove");
-
+			return eval;
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 
 	}
@@ -171,6 +181,9 @@ public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 				for (int i = 0; i < sa.length; i++) {
 					if (sa[i].equals("cp")) {
 						eval = Integer.parseInt(sa[i + 1]);
+					}
+					if (sa[i].equals("nodes")) {
+						nodes = Integer.parseInt(sa[i + 1]);
 					}
 				}
 				if (listener != null) {

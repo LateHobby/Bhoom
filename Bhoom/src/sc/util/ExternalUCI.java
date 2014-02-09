@@ -15,13 +15,15 @@ public interface ExternalUCI {
 		
 		int getMove();
 
-		void evaluatePosition(EngineBoard board, int depth, int timeMs);
+		int evaluatePosition(EngineBoard board, int depth, int timeMs);
 
 		void getBestMove(EngineBoard board, int depth, int timeMs);
 		
 		void setThinkingListener(ThinkingListener listener);
 
-		void evaluateMove(EngineBoard board, int move, int depth, int timeMs);
+		int evaluateMove(EngineBoard board, int move, int depth, int timeMs);
 		
 		void send(String command) throws IOException;
+
+		int getNodes();
 	}

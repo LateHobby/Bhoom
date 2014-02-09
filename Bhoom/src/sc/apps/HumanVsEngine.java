@@ -72,7 +72,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 		board.initializeStandard();
 		guiboard.initializeStandard();
 		cpan = new ChessBoardPanel(guiboard);
-		cpan.setPreferredSize(new Dimension(300, 300));
+		cpan.setPreferredSize(new Dimension(800, 800));
 		cpan.setFlipped(engineIsWhite);
 		cpan.addListener(this);
 		engine.setThinkingListener(this);
@@ -170,7 +170,7 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 			return 0;
 		}
 		tpan.clear();
-		final int move = engine.searchByDepth(board, 5).line[0];
+		final int move = engine.searchByDepth(board, 2).line[0];
 		// final int move = eng.searchByTime(board, 10000).line[0];
 		if (move != 0) {
 			if (board.makeMove(move, true)) {
@@ -352,6 +352,16 @@ public class HumanVsEngine implements ChessboardListener, ThinkingListener {
 		public Evaluator getEvaluator() {
 			// TODO Auto-generated method stub
 			return null;
+		}
+
+		@Override
+		public void newGame() {
+			try {
+				uci.send("ucinewgame");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			
 		}
 		
 	}

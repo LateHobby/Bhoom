@@ -8,11 +8,14 @@ import sc.engine.SearchEngine;
 import sc.engine.engines.AbstractEngine.SearchMode;
 import sc.engine.engines.CTestEngine;
 import sc.engine.movesorter.MvvLvaHashSorter;
+import sc.engine.movesorter.SeeHashSorter;
 import sc.engine.ttables.AlwaysReplace;
+import sc.engine.ttables.ReplaceIfDeeperAlternate;
 import sc.evaluators.SideToMoveEvaluator;
-import sc.testing.TestingUtils.EngineSetting;
-import sc.testing.TestingUtils.SuiteResult;
+import sc.util.EPDTestingUtils;
 import sc.util.ObjectPool.Factory;
+import sc.util.EPDTestingUtils.EngineSetting;
+import sc.util.EPDTestingUtils.SuiteResult;
 
 public class SaveOneBenchmark {
 
@@ -22,13 +25,14 @@ public class SaveOneBenchmark {
 
 	static private void saveBenchmark(String suiteFile,
 			Factory<SearchEngine> engineFactory, EngineSetting setting,
-			String saveFile) throws Exception {
-		SuiteResult sr = TestingUtils.getTestResults(suiteFile, engineFactory,
+			File saveFile) throws Exception {
+		SuiteResult sr = EPDTestingUtils.getTestResults(suiteFile, engineFactory,
 				setting);
 		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
 				saveFile));
 		oos.writeObject(sr);
 		oos.close();
+		System.out.println("Saved to " + saveFile);
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -41,7 +45,7 @@ public class SaveOneBenchmark {
 
 			@Override
 			public SearchEngine create() {
-				CTestEngine se = new CTestEngine("HashMoveSorter", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
+				CTestEngine se = new CTestEngine("MvvLva-combining", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter(true, false));
 				se.setFlags(true, true, true, false, true, true, true);
 				return se;
 			}
@@ -53,8 +57,9 @@ public class SaveOneBenchmark {
 			}
 			
 		};
-		
-		saveBenchmark(suiteFile.getAbsolutePath(), factory, setting, getResultFileName(setting, "HashMoveSorting", suiteFile));
+		String name = factory.create().name();
+		File saveFile = new File(benchmark, getResultFileName(setting, name, suiteFile));
+		saveBenchmark(suiteFile.getAbsolutePath(), factory, setting, saveFile);
 
 	}
 	
@@ -64,7 +69,7 @@ public class SaveOneBenchmark {
 		if (setting.depth >= 100) {
 			settingString = "" + (setting.timeMs / 1000) + "sec.ser";
 		} else {
-			settingString = "depth" + setting.depth;
+			settingString = "depth" + setting.depth + ".ser";
 		}
 		String fileName = suite.getName();
 		int lastDot = fileName.lastIndexOf(".");

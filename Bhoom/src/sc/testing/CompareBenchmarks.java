@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import sc.engine.EngineStats;
-import sc.testing.TestingUtils.SuiteResult;
-import sc.testing.TestingUtils.TestResult;
 import sc.util.PrintUtils;
 import sc.util.SimpleStats;
+import sc.util.EPDTestingUtils.SuiteResult;
+import sc.util.EPDTestingUtils.TestResult;
 
 public class CompareBenchmarks {
 

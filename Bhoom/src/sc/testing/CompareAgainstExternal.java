@@ -13,12 +13,13 @@ import sc.engine.EngineBoard;
 import sc.engine.EngineStats;
 import sc.engine.SearchEngine;
 import sc.engine.engines.AbstractEngine.SearchMode;
-import sc.testing.TestingUtils.EPDTest;
-import sc.testing.TestingUtils.EngineSetting;
-import sc.testing.TestingUtils.TestResult;
 import sc.util.BoardUtils;
 import sc.util.ExternalUCIEngine;
+import sc.util.EPDTestingUtils;
 import sc.util.ObjectPool.Factory;
+import sc.util.EPDTestingUtils.EPDTest;
+import sc.util.EPDTestingUtils.EngineSetting;
+import sc.util.EPDTestingUtils.TestResult;
 import sc.util.PrintUtils;
 import sc.util.SimpleStats;
 
@@ -42,11 +43,11 @@ public class CompareAgainstExternal {
 	
 	public void runSuite(File suiteFile, PrintStream stream) throws Exception {
 		EngineBoard board = new EBitBoard();
-		List<EPDTest> tests = TestingUtils.getTestsFromFile(suiteFile);
+		List<EPDTest> tests = EPDTestingUtils.getTestsFromFile(suiteFile);
 		List<ScoredResult> sr = new ArrayList<ScoredResult>();
 		int index = 0;
 		for (EPDTest test : tests) {
-			TestResult result = TestingUtils.getTestResult(ef, setting, board, test);
+			TestResult result = EPDTestingUtils.getTestResult(ef, setting, board, test);
 			BoardUtils.initializeBoard(board, test.fen);
 			uci.getBestMove(board, setting.depth, setting.timeMs);
 			int uciBestMoveEval = uci.getEval();
@@ -56,8 +57,7 @@ public class CompareAgainstExternal {
 			int uciMoveEval = uciBestMoveEval;
 			if (move != uciBestMove) {
 				board.makeMove(move, false);
-				uci.evaluateMove(board, move, setting.depth, setting.timeMs);
-				uciMoveEval = uci.getEval();
+				uciMoveEval = uci.evaluateMove(board, move, setting.depth, setting.timeMs);
 			}
 			ScoredResult sres = new ScoredResult(test.fen, result, uciMoveEval, uciBestMoveEval, move, uciBestMove);
 			sr.add(sres);
@@ -175,7 +175,7 @@ public class CompareAgainstExternal {
 		ExternalUCIEngine uci = new ExternalUCIEngine(
 		"C:\\Program Files (x86)\\BabasChess\\Engines\\toga\\togaII.exe");
 		CompareAgainstExternal cae = new CompareAgainstExternal(ef, setting, uci);
-		cae.runSuite(new File("testing/suites/SMALLTEST.EPD"), System.out );
+		cae.runSuite(new File("testing/suites/Test20.EPD"), System.out );
 		uci.shutDown();
 		System.exit(0);
 		

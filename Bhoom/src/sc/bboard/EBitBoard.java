@@ -24,7 +24,7 @@ public class EBitBoard implements EngineBoard {
 	public long wpawnzobristkey = 0L;
 	public long bpawnzobristkey = 0L;
 	
-	EMoveGenerator moveGen = new EMoveGenerator(this);
+	MoveGenerator moveGen = new FMoveGenerator(this);
 	
 	GameState gameState;
 	

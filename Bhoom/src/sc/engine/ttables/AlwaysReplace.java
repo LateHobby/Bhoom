@@ -1,6 +1,5 @@
 package sc.engine.ttables;
 
-import sc.engine.EngineBoard;
 import sc.engine.EvalTT;
 import sc.util.LPTTable;
 import sc.util.TTable.TTEntry;
@@ -32,6 +31,12 @@ public class AlwaysReplace extends AbstractEvalTT implements EvalTT {
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public void reset() {
+		ttable.reset();
+		
 	}
 	
 	

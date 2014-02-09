@@ -1,5 +1,6 @@
 package sc.util;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class LPTTable implements TTable {
@@ -110,5 +111,10 @@ public class LPTTable implements TTable {
 	@Override
 	public int getCapacity() {
 		return MAX_ITEMS;
+	}
+
+	public void reset() {
+		Arrays.fill(table, 0);
+		
 	}
 }

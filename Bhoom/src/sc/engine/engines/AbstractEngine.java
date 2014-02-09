@@ -35,8 +35,10 @@ abstract public class AbstractEngine implements SearchEngine {
 	public static boolean listen = false;
 	
 	private static final int MATE_DEPTH = 128;
-	private static final int POS_MARGIN = 100; // for futility pruning
+	private static final int DELTAPOS_1_UPPERBOUND = 100; // for futility pruning
+	private static final int DELTAPOS_2_LOWERBOUND = -100;
 	private static final int NULLMOVE_REDUCTION = 2;
+
 
 	public enum SearchMode {ASP_WIN, MTDF, BIN_MTDF, HYBRID_MTDF};
 	
@@ -45,7 +47,6 @@ abstract public class AbstractEngine implements SearchEngine {
 	ThinkingListener thinkingListener;
 	
 	protected EvalTT evaltt;
-//	protected EvalTT pvtt = new AlwaysReplace(18);
 	protected MoveSorter moveSorter;
 
 	
@@ -94,11 +95,15 @@ abstract public class AbstractEngine implements SearchEngine {
 					}
 				}, 256, "localVarsPool");
 		
-		System.out.printf("%s : nullMoves:%s lmr:%s hh:%s km:%s fp:%s\n", name,
+		
+	}
+
+	protected String getFlagString() {
+		return String.format("%s : nullMoves:%s lmr:%s hh:%s km:%s fp:%s", name,
 				fb(useNullMoves()), fb(useLateMoveReduction()), fb(useHistoryHeuristic()),
 				fb(useKillerMoves()), fb(useFutilityPruning()));
 	}
-
+	
 	private String fb(boolean b) {
 		return b ? "True" : "False";
 	}
@@ -117,8 +122,13 @@ abstract public class AbstractEngine implements SearchEngine {
 
 	abstract public boolean useFutilityPruning();
 
-
-
+	@Override
+	public void newGame() {
+		// reset engine's stored values
+		evaltt.reset();
+		moveSorter.reset();
+		evaluator.reset();
+	}
 
 	@Override
 	public Continuation searchByDepth(EngineBoard board, int searchDepth) {
@@ -219,12 +229,20 @@ abstract public class AbstractEngine implements SearchEngine {
 		}
 		alpha = localVars.alpha;
 
+		if (isGeneralLevel2FutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
+			localVars.eval = beta;
+			return beta;
+		}
 		
-		
-		if (isGeneralFutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
+		if (isGeneralLevel1FutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
 			localVars.eval = alpha;
 			return alpha;
 		}
+		int score;
+		int bestScore = Evaluator.MIN_EVAL;
+		int bestMove = 0;
+		boolean pvFound = false;
+		int newDepthLeft = (depthLeft <= 0) ? 0 : depthLeft - 1;
 		
 		int numMoves = generateMoves(board,  quiesce, localVars);
 		if (numMoves == 0) {
@@ -234,20 +252,19 @@ abstract public class AbstractEngine implements SearchEngine {
 		
 
 		if (useMoveSorter()) {
-			long start = System.currentTimeMillis();
+//			long start = System.currentTimeMillis();
 			moveSorter.sortMoves(board, ply, localVars.hashMove, localVars.moves, numMoves);
-			measuredTime += (System.currentTimeMillis() - start);
+//			measuredTime += (System.currentTimeMillis() - start);
 		}
 
-		int score;
-		int bestScore = Evaluator.MIN_EVAL;
-		int bestMove = 0;
-		boolean pvFound = false;
-		int newDepthLeft = (depthLeft <= 0) ? 0 : depthLeft - 1;
 
 		for (int i = 0; i < numMoves; i++) {
 			int move = localVars.getMove(i);
-			if (isSpecificFutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
+			if (isMoveLevel2FutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
+				bestScore = beta;
+				break;
+			}
+			if (isMoveLevel1FutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
 				bestScore = Math.max(bestScore, alpha);
 				break;
 			}
@@ -298,20 +315,97 @@ abstract public class AbstractEngine implements SearchEngine {
 
 	}
 
-
-	
-
-	private boolean isSpecificFutilityPruned(EngineBoard board, int move,
+	// For the null move we are interested in seeing whether the null move
+	// causes a beta cutoff. This method returns false if this cannot happen
+	// using futility arguments.
+	protected boolean isNullMoveLevel1FutilityPruned(EngineBoard board, 
 			int alpha, int beta, int staticEval, int depthLeft) {
-		if (useFutilityPruning() && depthLeft <= 1) {
-			int futilityGap = alpha - staticEval - POS_MARGIN;
-			if (futilityGap > 0) { 
-				int captureValue = pieceCapturedValue(board, move);
-				if (captureValue < futilityGap) {
-					traceFutilityPrune(staticEval, captureValue);
-					
-					// fail low
-//					System.out.printf("Fail-low: TEval=%d alpha=%d MVP=%d\n", terminalEval, alpha, mvopv);
+		if (useFutilityPruning()) {
+			if (depthLeft <= 1) {
+				// Condition : beta1 > static1
+				if (beta > staticEval) {
+					traceFutilityPrune(staticEval, 0);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	// Fail low if depth<=1 and the static eval is so low that this move's
+	// outcome cannot raise the eval in qsearch above alpha
+	protected boolean isMoveLevel1FutilityPruned(EngineBoard board, int move,
+			int alpha, int beta, int staticEval, int depthLeft) {
+		if (useFutilityPruning()) {
+			if (depthLeft <= 1) {
+				// Condition : alpha1 > static1 + v1 + U(deltaPos1)
+				int futilityGap = alpha - staticEval - DELTAPOS_1_UPPERBOUND;
+				if (futilityGap > 0) { 
+					int captureValue = pieceCapturedValue(board, move);
+					if (captureValue < futilityGap) {
+						traceFutilityPrune(staticEval, captureValue);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	
+	// Fail low if depth<=1 and the static eval is so low that not even the best
+	// outcome can raise the eval in qsearch above alpha
+	protected boolean isGeneralLevel1FutilityPruned(EngineBoard board, int alpha, int beta,
+			int staticEval, int depthLeft) {
+		if (useFutilityPruning()) {
+			if (depthLeft <= 1) {
+				// Condition: alpha1 > static1 + max attacked opponent piece + U(deltaPos1)
+				int futilityGap = alpha - staticEval - DELTAPOS_1_UPPERBOUND;
+				if (futilityGap > 0) { 
+					boolean white = board.getWhiteToMove();
+					int highestOppPieceValue = highestAttackedPieceValue(board, !white);
+					if (highestOppPieceValue < futilityGap) {
+						traceFutilityPrune(staticEval, highestOppPieceValue);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	// Fail high if depth<=2 and the static eval is so high that this move's
+	// outcome cannot lower the eval below beta
+	protected boolean isMoveLevel2FutilityPruned(EngineBoard board, int move,
+			int alpha, int beta, int staticEval, int depthLeft) {
+		if (useFutilityPruning()) {
+			if (depthLeft <= 2) {
+				int maxOwnPieceValue = highestPieceValue(board, board.getWhiteToMove());
+				// Condition : beta2 < static2 + v2 + L(deltaPos2) - max self piece  - U(deltaPos1)
+				int futilityGap = beta - staticEval - DELTAPOS_2_LOWERBOUND + maxOwnPieceValue + DELTAPOS_1_UPPERBOUND;
+				if (futilityGap < 0) { 
+					return true;
+				} else {
+					int captureValue = pieceCapturedValue(board, move);
+					if (captureValue > futilityGap) {
+						traceFutilityPrune(staticEval, captureValue);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	// Fail high if depth<=2 and the static eval is so high that no
+	// sequence of two moves can lower the eval below beta
+	protected boolean isGeneralLevel2FutilityPruned(EngineBoard board, int alpha, int beta,
+			int staticEval, int depthLeft) {
+		if (useFutilityPruning()) {
+			if (depthLeft <= 2) {
+				int maxOwnPieceValue = highestPieceValue(board, board.getWhiteToMove());
+				// Condition: beta2 < static2 + 0 + L(deltaPos2) - max own piece - U(deltaPos1)
+				if (beta < staticEval + DELTAPOS_2_LOWERBOUND - maxOwnPieceValue - DELTAPOS_1_UPPERBOUND) {
 					return true;
 				}
 			}
@@ -320,25 +414,6 @@ abstract public class AbstractEngine implements SearchEngine {
 	}
 
 	
-
-	private boolean isGeneralFutilityPruned(EngineBoard board, int alpha, int beta,
-			int staticEval, int depthLeft) {
-		if (useFutilityPruning() && depthLeft <= 1) {
-			int futilityGap = alpha - staticEval - POS_MARGIN;
-			if (futilityGap > 0) { 
-				int mvopValue = mostValuableOpponentPieceValue(board);
-				if (mvopValue < futilityGap) {
-					traceFutilityPrune(staticEval, mvopValue);
-					
-					// fail low
-//					System.out.printf("Fail-low: TEval=%d alpha=%d MVP=%d\n", terminalEval, alpha, mvopv);
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	private int pieceCapturedValue(EngineBoard board, int move) {
 
 		if (Encodings.isEnpassantCapture(move)) {
@@ -349,16 +424,21 @@ abstract public class AbstractEngine implements SearchEngine {
 		}
 	}
 
-
-
-	private int mostValuableOpponentPieceValue(EngineBoard board) {
+	private int highestAttackedPieceValue(EngineBoard board, boolean white) {
 		PositionInfo pinfo = board.getPositionInfo();
-		OneSidePositionInfo osp = board.getWhiteToMove() ? pinfo.bConfig : pinfo.wConfig;
+		OneSidePositionInfo osp = white ? pinfo.wConfig : pinfo.bConfig;
+		byte mvp = osp.most_valuable_attacked_piece;
+		return evaluator.pieceWeight(mvp);
+	}
+
+	private int highestPieceValue(EngineBoard board, boolean white) {
+		PositionInfo pinfo = board.getPositionInfo();
+		OneSidePositionInfo osp = white ? pinfo.wConfig : pinfo.bConfig;
 		byte mvp = osp.most_valuable_piece;
 		return evaluator.pieceWeight(mvp);
 	}
 
-	private void addToKillerMoves(EngineBoard board, int ply, int move,
+	protected void addToKillerMoves(EngineBoard board, int ply, int move,
 			int hashMove) {
 		if (useKillerMoves() && useMoveSorter()) {
 			moveSorter.addToKillerMoves(board, ply, move, hashMove);
@@ -366,7 +446,7 @@ abstract public class AbstractEngine implements SearchEngine {
 		
 	}
 
-	private void incrementHistoryHeuristicArray(int move, boolean increment) {
+	protected void incrementHistoryHeuristicArray(int move, boolean increment) {
 		if (useHistoryHeuristic() && useMoveSorter()) {
 			moveSorter.incrementHistoryHeuristicArray(move, increment);
 		}
@@ -470,7 +550,7 @@ abstract public class AbstractEngine implements SearchEngine {
 	 * @param lv
 	 * @return
 	 */
-	private boolean retrieveEvalCutoff(EngineBoard board, int alpha, int beta,
+	protected boolean retrieveEvalCutoff(EngineBoard board, int alpha, int beta,
 			int depthLeft, LocalVars lv) {
 		lv.alpha = alpha;
 		lv.hashMove = 0;
@@ -509,7 +589,7 @@ abstract public class AbstractEngine implements SearchEngine {
 		return false;
 	}
 
-	private void store(EngineBoard board, int alpha, int beta, int eval,
+	protected void store(EngineBoard board, int alpha, int beta, int eval,
 			int move, int depthLeft) {
 		if (useTTable()) {
 			if (move == 0) {
@@ -600,9 +680,8 @@ abstract public class AbstractEngine implements SearchEngine {
 		if (depthLeft < NULLMOVE_REDUCTION) {
 			return false;
 		}
-		if (isGeneralFutilityPruned(board, alpha, beta, terminalEval, depthLeft-NULLMOVE_REDUCTION)) {
-			localVars.eval = alpha;
-			return true;
+		if (isNullMoveLevel1FutilityPruned(board, alpha, beta, terminalEval, depthLeft-NULLMOVE_REDUCTION)) {
+			return false;
 		}
 		stats.tryNull();
 		makeMove(board, 0);
@@ -868,8 +947,10 @@ abstract public class AbstractEngine implements SearchEngine {
 			alpha = Evaluator.MIN_EVAL;
 			beta = Evaluator.MAX_EVAL;
 			localVars = localVarsPool.allocate();
+			traceEnteredNode(board, alpha, beta, depth, 0, 0, EngineListener.NORMAL);
 			eval = alphaBeta(board, alpha, beta, depth, 0,
 					localVars);
+			traceExitNode(eval);
 			e2 = getContinuation(localVars.bestNodePV);
 			e2.eval = eval;
 			localVarsPool.release(localVars);
@@ -1005,6 +1086,7 @@ abstract public class AbstractEngine implements SearchEngine {
 		PV bestChildPV = new PV();
 //		PV currentPV = new PV();
 		public int bestMove;
+		public MoveHandler moveHandler = new MoveHandler();
 		
 		@Override
 		public void reset() {

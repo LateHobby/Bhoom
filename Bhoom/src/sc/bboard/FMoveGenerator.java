@@ -6,7 +6,7 @@ import sc.encodings.EConstants;
 import sc.encodings.Encodings;
 import sc.util.BitManipulation;
 
-public class EMoveGenerator implements MoveGenerator {
+public class FMoveGenerator implements MoveGenerator {
 
 	// private ObjectPool<Moves> movesPool;
 
@@ -14,7 +14,9 @@ public class EMoveGenerator implements MoveGenerator {
 
 	boolean debug;
 
-	EMoveGenerator(EBitBoard board) {
+	private enum CaptureMode {CAPTURES_ONLY, NONCAPTURES_ONLY, ALL};
+	
+	FMoveGenerator(EBitBoard board) {
 		this.board = board;
 	}
 
@@ -34,41 +36,62 @@ public class EMoveGenerator implements MoveGenerator {
 
 	@Override
 	public int fillLegalMoves(int[] moveArr, int startIndex) {
-		return fillMoves(moveArr, startIndex, false, ~0L);
+		return fillMoves(moveArr, startIndex, CaptureMode.ALL, ~0L);
 	}
 
 	@Override
 	public int fillLegalCaptures(int[] moveArr, int startIndex) {
-		return fillMoves(moveArr, startIndex, true, ~0L);
+		return fillMoves(moveArr, startIndex, CaptureMode.CAPTURES_ONLY, ~0L);
 	}
-
+	@Override
+	public int fillLegalNonCaptures(int[] moveArr, int startIndex) {
+		return fillMoves(moveArr, startIndex, CaptureMode.NONCAPTURES_ONLY, ~0L);
+	}
+	
 	@Override
 	public int fillLegalCapturesTo(int[] moveArr, int startIndex, short toSquare) {
 		long targetMask = BitManipulation.bit_masks[toSquare];
-		return fillMoves(moveArr, startIndex, true, targetMask);
+		return fillMoves(moveArr, startIndex, CaptureMode.CAPTURES_ONLY, targetMask);
 	}
 
-	private int fillMoves(int[] moveArr, int fillindex, boolean capturesOnly, long targetMask) {
+	private int fillMoves(int[] moveArr, int fillindex, CaptureMode mode, long targetMask) {
 		board.updateDerivedBoards();
 		boolean whiteToMove = board.getWhiteToMove();
 		OneSidePositionInfo friendly = whiteToMove ? board.posInfo.wConfig
 				: board.posInfo.bConfig;
 		OneSidePositionInfo enemy = whiteToMove ? board.posInfo.bConfig
 				: board.posInfo.wConfig;
-		if (capturesOnly) {
-			targetMask &= enemy.all_occ;
+		switch (mode) {
+		case CAPTURES_ONLY: 
+			targetMask &= enemy.all_occ; 
+			break;
+		case NONCAPTURES_ONLY:
+			targetMask &= ~enemy.all_occ; 
+			break;
+		case ALL:
+			break;
 		}
+		
 		if (enemy.numCheckers == 2) {
 			// only king moves
 		} else {
-			if (!capturesOnly) {
+			if (mode != CaptureMode.CAPTURES_ONLY) {
 				fillindex = fillCastlingMoves(friendly, enemy, moveArr,
 						fillindex);
 			}
-			fillindex = fillFigureMoves(friendly, enemy, moveArr, fillindex,
-					targetMask);
-			fillindex = fillPawnMoves(friendly, enemy, moveArr, fillindex,
-					targetMask);
+			if (mode == CaptureMode.CAPTURES_ONLY) {
+				// first the captures with the least valuable pieces
+				fillindex = fillPawnMoves(friendly, enemy, moveArr, fillindex,
+						targetMask);
+				fillindex = fillFigureMoves(friendly, enemy, moveArr, fillindex,
+						targetMask);
+			} else {
+				// prefer figure moves to pawn moves
+				fillindex = fillFigureMoves(friendly, enemy, moveArr, fillindex,
+						targetMask);
+				fillindex = fillPawnMoves(friendly, enemy, moveArr, fillindex,
+						targetMask);
+			}
 		}
 		fillindex = fillKingMoves(friendly, enemy, moveArr, fillindex,
 				targetMask);
@@ -78,31 +101,33 @@ public class EMoveGenerator implements MoveGenerator {
 	private int fillFigureMoves(OneSidePositionInfo friendly,
 			OneSidePositionInfo enemy, int[] moveArr, int fillindex,
 			 long targetMask) {
-		// long targetMask = capturesOnly ? enemy.all_occ : ~0L;
 		if (friendly.kingInCheck) {
 			targetMask &= (enemy.check_blocking_squares | enemy.checkers);
 		}
 		if (targetMask != 0L) {
-			long figures = friendly.figure_occ;
-			while (figures != 0L) {
-				long fromLoc = Long.lowestOneBit(figures);
-				short from = (short) Long.numberOfTrailingZeros(fromLoc);
-				long targets = friendly.figure_attacks[from]
-						& ~friendly.all_occ & targetMask;
-				if ((friendly.is_pinned & fromLoc) != 0L) {
-					targets &= friendly.pin_blocking_squares[from];
-				}
-				;
-				while (targets != 0L) {
-					long toLoc = Long.lowestOneBit(targets);
-					short to = (short) Long.numberOfTrailingZeros(toLoc);
-					moveArr[fillindex++] = Encodings.encodeMove(from, to,
-							Encodings.EMPTY, false, false);
+			// move less valuable pieces first
+			for (int i = 4; i >= 1; i--) { // 1=queen, 4=knight 
+				long figures = friendly.figure_occ & friendly.occ_boards[i];
+				while (figures != 0L) {
+					long fromLoc = Long.lowestOneBit(figures);
+					short from = (short) Long.numberOfTrailingZeros(fromLoc);
+					long targets = friendly.figure_attacks[from]
+							& ~friendly.all_occ & targetMask;
+					if ((friendly.is_pinned & fromLoc) != 0L) {
+						targets &= friendly.pin_blocking_squares[from];
+					}
+					;
+					while (targets != 0L) {
+						long toLoc = Long.lowestOneBit(targets);
+						short to = (short) Long.numberOfTrailingZeros(toLoc);
+						moveArr[fillindex++] = Encodings.encodeMove(from, to,
+								Encodings.EMPTY, false, false);
 
-					targets &= ~toLoc;
+						targets &= ~toLoc;
 
+					}
+					figures &= ~fromLoc;
 				}
-				figures &= ~fromLoc;
 			}
 		}
 		return fillindex;
@@ -112,7 +137,6 @@ public class EMoveGenerator implements MoveGenerator {
 	private int fillKingMoves(OneSidePositionInfo friendly,
 			OneSidePositionInfo enemy, int[] moveArr, int fillindex,
 			long targetMask) {
-		// long targetMask = capturesOnly ? enemy.all_occ : ~0L;
 		if (friendly.kingInCheck) {
 			targetMask &= ~enemy.check_avoidance_squares;
 		}
@@ -138,24 +162,28 @@ public class EMoveGenerator implements MoveGenerator {
 		if (friendly.kingInCheck) {
 			pawnCaptureTargets &= (enemy.check_blocking_squares | enemy.checkers);
 		}
-		while (pawnCaptureTargets != 0L) {
-			long toLoc = Long.lowestOneBit(pawnCaptureTargets);
-			short to = (short) Long.numberOfTrailingZeros(toLoc);
-			long capturingPawns = FMoves.capturingPawns(friendly.white, to,
-					friendly.occ_boards[5]); // 5 = pawn
-			while (capturingPawns != 0L) {
-				long pawnLoc = Long.lowestOneBit(capturingPawns);
-				short from = (short) Long.numberOfTrailingZeros(pawnLoc);
+		// capture most valuable pieces first
+		for (int i = 1; i < 6; i++) { // 1=queen, 5=pawn
+			long localTargets = pawnCaptureTargets & enemy.occ_boards[i];
+			while (localTargets != 0L) {
+				long toLoc = Long.lowestOneBit(localTargets);
+				short to = (short) Long.numberOfTrailingZeros(toLoc);
+				long capturingPawns = FMoves.capturingPawns(friendly.white, to,
+						friendly.occ_boards[5]); // 5 = pawn
+				while (capturingPawns != 0L) {
+					long pawnLoc = Long.lowestOneBit(capturingPawns);
+					short from = (short) Long.numberOfTrailingZeros(pawnLoc);
 
-				if ((friendly.is_pinned & pawnLoc) == 0L
-						|| (toLoc & friendly.pin_blocking_squares[from]) != 0) {
-					fillindex = fillPawnMovesWithPromotions(friendly.white,
-							from, to, moveArr, fillindex);
+					if ((friendly.is_pinned & pawnLoc) == 0L
+							|| (toLoc & friendly.pin_blocking_squares[from]) != 0) {
+						fillindex = fillPawnMovesWithPromotions(friendly.white,
+								from, to, moveArr, fillindex);
+					}
+
+					capturingPawns &= ~pawnLoc;
 				}
-
-				capturingPawns &= ~pawnLoc;
+				localTargets &= ~toLoc;
 			}
-			pawnCaptureTargets &= ~toLoc;
 		}
 
 		// en passant capture
@@ -285,11 +313,6 @@ public class EMoveGenerator implements MoveGenerator {
 			}
 		}
 		return fillindex;
-	}
-
-	@Override
-	public int fillLegalNonCaptures(int[] moveArr, int startIndex) {
-		throw new RuntimeException("Unimplemented");
 	}
 
 }

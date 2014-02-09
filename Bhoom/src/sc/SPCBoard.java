@@ -8,6 +8,7 @@ public interface SPCBoard {
 		boolean isMoveLegal(int move);
 		int fillLegalMoves(int[] moveArr, int startIndex);
 		int fillLegalCaptures(int[] moveArr, int startIndex);
+		int fillLegalNonCaptures(int[] moveArr, int startIndex);
 		int fillLegalCapturesTo(int[] moveArr, int startIndex, short toSquare);
 		
 	}

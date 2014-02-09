@@ -22,11 +22,13 @@ public class CEngine extends AbstractEngine {
 	public CEngine(String name, SearchMode mode, int aspWin, Evaluator eval, EvalTT ttable,
 			MoveSorter sorter) {
 		super(name, mode, aspWin, eval, ttable, sorter);
+		System.out.println(getFlagString());
 	}
 	
 	public CEngine(String name, SearchMode mode, Evaluator eval, EvalTT ttable,
 			MoveSorter sorter) {
 		super(name, mode, eval, ttable, sorter);
+		System.out.println(getFlagString());
 	}
 
 	@Override

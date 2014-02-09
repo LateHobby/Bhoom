@@ -7,10 +7,23 @@ import sc.evaluators.SideToMoveEvaluator;
 
 public class MvvLvaHashSorter extends AbstractMoveSorter {
 
-	Evaluator eval = new SideToMoveEvaluator();
-	int[] killerMoveRanks = new int[128];
+	
+//	Evaluator eval = new SideToMoveEvaluator();
 	int[] victimRanks = new int[128];
 	int[] attackerRanks = new int[128];
+	int[] combinedRanks = new int[128];
+	
+	boolean combineRanks;
+	boolean slide;
+	
+	public MvvLvaHashSorter() {
+		this(true, false);
+	}
+	
+	public MvvLvaHashSorter(boolean combineRanks, boolean slide) {
+		this.combineRanks = combineRanks;
+		this.slide = slide;
+	}
 	
 	@Override
 	public void sortMoves(EngineBoard board, int ply, int hashMove, int[] moves,
@@ -25,13 +38,38 @@ public class MvvLvaHashSorter extends AbstractMoveSorter {
 				victimRanks[i] = 0;
 				attackerRanks[i] = 0;
 			}
+			if (combineRanks) {
+				combinedRanks[i] = 100 * (victimRanks[i] * 1000 + attackerRanks[i]) + 100 * killerMoveRanks[i];
+			}
 		}
-		isortDescending(moves, numMoves, victimRanks, attackerRanks, killerMoveRanks, hhranks);
-		swapWithStart(0, moves, hashMove, numMoves);
+		if (combineRanks) {
+			isortDescending(moves, numMoves, combinedRanks, hhranks);
+		} else {
+			isortDescending(moves, numMoves, victimRanks, attackerRanks, killerMoveRanks, hhranks);
+		}
+		if (slide) {
+			slideUpTo(0, moves, hashMove, numMoves);
+		} else {
+			swapWithStart(0, moves, hashMove, numMoves);
+		}
 
 	}
 	
 	
+
+	private void slideUpTo(int index, int[] moves, int move, int numMoves) {
+		for (int i = index; i < numMoves; i++) {
+			if (moves[i] == move) {
+				int curr = i-1;
+				while (curr >= index) {
+					moves[curr+1] = moves[curr];
+					curr--;
+				}
+				moves[index] = move;
+				break;
+			}
+		}
+	}
 
 	protected void swapWithStart(int startIndex, int[] moves, int move, int numMoves) {
 		for (int i = startIndex + 1; i < numMoves; i++ ) {
@@ -63,7 +101,7 @@ public class MvvLvaHashSorter extends AbstractMoveSorter {
 	}
 
 	int getValue(byte piece) {
-		return eval.pieceWeight(piece);
+		return Evaluator.STATIC_PIECE_WEIGHTS[piece];
 	}
 
 }

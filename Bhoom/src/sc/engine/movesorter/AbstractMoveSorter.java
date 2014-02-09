@@ -10,11 +10,20 @@ public abstract class AbstractMoveSorter implements MoveSorter {
 	protected int[][] killerMoves = new int[200][4];
 
 	protected int[] hhranks = new int[128];
-	
+	protected int[] killerMoveRanks = new int[128];
+
 	public AbstractMoveSorter() {
-		for (int i = 0; i < killerMoves.length; i++) {
-			killerMoves[i] = new int[4];
-		}
+		createArrays();
+	}
+	
+	private void createArrays() {
+		historyHeuristicArray = new int[64][64];
+		killerMoves = new int[200][4];
+	}
+
+	@Override
+	public void reset() {
+		createArrays();
 	}
 	
 	@Override

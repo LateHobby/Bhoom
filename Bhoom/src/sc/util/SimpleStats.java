@@ -51,4 +51,15 @@ public class SimpleStats {
 		double avg = mean();
 		return avg/se;
 	}
+	
+	public SimpleStats difference(SimpleStats other) {
+		if (other.pos != pos) {
+			throw new RuntimeException("Unequal point count");
+		}
+		SimpleStats s = new SimpleStats();
+		for (int i = 0; i < pos; i++) {
+			s.include(arr[i] - other.arr[i]);
+		}
+		return s;
+	}
 }

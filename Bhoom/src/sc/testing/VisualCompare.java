@@ -26,6 +26,7 @@ import javax.swing.ListSelectionModel;
 
 public class VisualCompare extends JFrame {
 
+	private static File benchmark = new File("testing/benchmark");
 	
 	DirList leftList;
 	DirList rightList;
@@ -33,9 +34,9 @@ public class VisualCompare extends JFrame {
 	JButton compareButton = new JButton("Compare");
 	
 	public VisualCompare() {
-		super("Directory: " + SaveBenchmark.benchmark.getAbsolutePath());
-		leftList = new DirList(SaveBenchmark.benchmark);
-		rightList = new DirList(SaveBenchmark.benchmark);
+		super("Directory: " + benchmark.getAbsolutePath());
+		leftList = new DirList(benchmark);
+		rightList = new DirList(benchmark);
 		setLayout(new BorderLayout());
 		JPanel pan = new JPanel();
 		pan.setLayout(new GridLayout(1,2,2,4));

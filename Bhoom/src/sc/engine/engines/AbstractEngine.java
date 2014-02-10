@@ -744,7 +744,6 @@ abstract public class AbstractEngine implements SearchEngine {
 			return true;
 		}
 		if (board.drawByRepetition()) {
-			System.out.println("Saw draw by repetition");
 			return true;
 		}
 		if (board.drawByInsufficientMaterial()) {

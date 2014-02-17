@@ -31,11 +31,11 @@ public class ComparisonTestBase {
 	EngineBoard board = new EBitBoard();
 	
 	
-	String fastSuite = "junit/sc/engine/engines/fast.epd";
+	String fastSuite = "junit/sc/engine/engines/resources/fast.epd";
 	
-	String suite20 = "junit/sc/engine/engines/Test20.EPD";
+	String suite20 = "junit/sc/engine/engines/resources/Test20.EPD";
 	
-	String suite100 = "junit/sc/engine/engines/Test100.EPD";
+	String suite100 = "junit/sc/engine/engines/resources/Test100.EPD";
 	
 	public void setFlags(CTestEngine ce, boolean[] f) {
 		ce.setFlags(f[0], f[1], f[2], f[3], f[4], f[5], f[6]);

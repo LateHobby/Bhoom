@@ -110,7 +110,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void evalTableWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 		testCommon("TTable (short)", TTABLE, aspWinEngine, uci, TEST_DEPTH, suite, 
 				TTABLE_SHORT_NODE_DROP_TARGET_PERCENTAGE, TTABLE_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, false );
@@ -119,7 +119,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void evalTableWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 		testCommon("TTable (medium)", TTABLE, aspWinEngine, uci, TEST_DEPTH, suite, 
 				TTABLE_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, TTABLE_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, true );
@@ -127,7 +127,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void moveSorterWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 //		testCommon("Move sorting", MOVESORTER, aspWinEngine, uci, TEST_DEPTH, suite, 0.2, 0.1, 1.0);
 		testCommon("Move sorting (short)", MOVESORTER, aspWinEngine, uci, TEST_DEPTH, suite,
 				MOVE_SORTING_SHORT_NODE_DROP_TARGET_PERCENTAGE, MOVE_SORTING_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
@@ -136,7 +136,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void moveSorterWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 //		testCommon("Move sorting", MOVESORTER, aspWinEngine, uci, TEST_DEPTH, suite, 0.1, 0.1, 1.0);
 		testCommon("Move sorting (medium)", MOVESORTER, aspWinEngine, uci, TEST_DEPTH, suite,
 				MOVE_SORTING_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, MOVE_SORTING_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
@@ -145,7 +145,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void nullMovesWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 		testCommon("Null moves (short)", NULLMOVES, aspWinEngine, uci, TEST_DEPTH, suite,
 				NULL_MOVES_SHORT_NODE_DROP_TARGET_PERCENTAGE, NULL_MOVES_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, false );
@@ -153,7 +153,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void nullMovesWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 		testCommon("Null moves (medium)", MOVESORTER, aspWinEngine, uci, TEST_DEPTH, suite,
 				NULL_MOVES_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, NULL_MOVES_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, true );
@@ -161,7 +161,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 
 	@Test
 	public void killerMovesWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 //		testCommon("Killer moves", KILLERMOVES, aspWinEngine, uci, TEST_DEPTH, suite, 0.4, 0.6, 1.0);
 		testCommon("Killer moves (short)", KILLERMOVES, aspWinEngine, uci, TEST_DEPTH, suite,
 				KILLER_MOVES_SHORT_NODE_DROP_TARGET_PERCENTAGE, KILLER_MOVES_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
@@ -170,7 +170,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void killerMovesWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 //		testCommon("Killer moves", KILLERMOVES, aspWinEngine, uci, TEST_DEPTH, suite, 0.1, 0.1, 1.0);
 		testCommon("Killer moves (medium)", KILLERMOVES, aspWinEngine, uci, TEST_DEPTH, suite,
 				KILLER_MOVES_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, KILLER_MOVES_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
@@ -179,7 +179,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void historyHeuristicWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 //		testCommon("History heuristic", HISTORYH, aspWinEngine, uci, TEST_DEPTH, suite, 0.4, 0.6, 1.0);
 		testCommon("History heuristic (short)", HISTORYH, aspWinEngine, uci, TEST_DEPTH, suite,
 				HISTORY_H_SHORT_NODE_DROP_TARGET_PERCENTAGE, HISTORY_H_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
@@ -188,7 +188,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void historyHeuristicWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 		testCommon("History heuristic (medium)", HISTORYH, aspWinEngine, uci, TEST_DEPTH, suite,
 				HISTORY_H_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, HISTORY_H_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, true);
@@ -196,7 +196,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void futilityPruningWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/fast.epd";
+		String suite = fastSuite;
 		testCommon("Futility pruning (short)", FUTILITYPRUNING, aspWinEngine, uci, TEST_DEPTH, suite,
 				FUTILITY_PRUNING_SHORT_NODE_DROP_TARGET_PERCENTAGE, FUTILITY_PRUNING_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
 				EVAL_INCREASE_PERCENTAGE, false );
@@ -204,7 +204,7 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	
 	@Test
 	public void futilityPruningWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
-		String suite = "junit/sc/engine/engines/Test20.EPD";
+		String suite = suite20;
 //		testCommon("Futility pruning", FUTILITYPRUNING, aspWinEngine, uci, TEST_DEPTH, suite, 0.6, 0.9, 1.0);
 		testCommon("Futility pruning (medium)", FUTILITYPRUNING, aspWinEngine, uci, TEST_DEPTH, suite, 
 				FUTILITY_PRUNING_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, FUTILITY_PRUNING_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 

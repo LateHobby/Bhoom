@@ -49,6 +49,15 @@ public class CTestEngine extends AbstractEngine {
 		System.out.println(getFlagString());
 	}
 
+	public EngineParameters getEngineParameters() {
+		return null;
+	}
+	
+	public void setParameters(double[] values) {
+		
+	}
+	
+	
 //	@Override
 //	protected int alphaBeta(EngineBoard board, int alpha, int beta,
 //			int depthLeft, int ply, LocalVars localVars) {

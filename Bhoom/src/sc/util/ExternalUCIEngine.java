@@ -11,7 +11,7 @@ import sc.util.StreamGobbler.OnLineListener;
 
 public class ExternalUCIEngine implements ExternalUCI, OnLineListener {
 
-	boolean debug = true;
+	boolean debug = false;
 
 	private boolean processStarted;
 	private String[] cmd;

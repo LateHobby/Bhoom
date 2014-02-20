@@ -2,8 +2,10 @@ package sc.util;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Executors;
 
 import sc.encodings.EConstants;
 
@@ -107,6 +109,20 @@ public class Magic {
 	 * @return
 	 */
 	private static int[] getDiagonalSquares(int square) {
+		long diag = getDiagonalBits(square);
+
+		return BitManipulation.getSquares(square, diag);
+
+	}
+
+	/**
+	 * Returns the bits in the diagonals through the
+	 * given square. Does not include edge squares, or the square itself.
+	 * 
+	 * @param square
+	 * @return
+	 */
+	public static long getDiagonalBits(int square) {
 		long diag45 = EConstants.diag45[square];
 		long diag135 = EConstants.diag135[square];
 
@@ -118,12 +134,23 @@ public class Magic {
 		diag &= edge_mask;
 		// remove self-occupied square
 		diag &= ~BitManipulation.bit_masks[square];
-
-		return BitManipulation.getSquares(square, diag);
-
+		return diag;
 	}
 
 	private static int[] getRookSquares(int square) {
+		long rankAndFile = getRankAndFileBits(square);
+		
+		return BitManipulation.getSquares(square, rankAndFile );
+	}
+
+	/**
+	 * Returns the bits in the rank and file through the
+	 * given square. Does not include edge squares, or the square itself.
+	 * 
+	 * @param square
+	 * @return
+	 */
+	public static long getRankAndFileBits(int square) {
 		long filea = EConstants.files[square];
 		// 1 everywhere except the top and bottom edges
 		long edge_mask = ~(EConstants.ranks[0] | EConstants.ranks[63]);
@@ -139,8 +166,9 @@ public class Magic {
 		ranka &= edge_mask;
 		// remove self-occupied square
 		ranka &= ~BitManipulation.bit_masks[square];
-
-		return BitManipulation.getSquares(square, ranka | filea);
+		
+		long rankAndFile = ranka | filea;
+		return rankAndFile;
 	}
 
 	private static int[] getFileSquares(int square) {
@@ -234,35 +262,38 @@ public class Magic {
 
 	private static void printRookMagics() {
 
-		Executor exec = new ScheduledThreadPoolExecutor(8);
-		int numTasks = 8;
-		for (int i = 0; i < numTasks; i++) {
-			final int start = i * numTasks;
-			final int end = start + 64 / numTasks;
+		int numTasks = 64;
+		Executor exec = Executors.newFixedThreadPool(8);
+		final CountDownLatch cdl = new CountDownLatch(numTasks);
+		for (int task = 0; task < numTasks; task++) {
+			final int square = task;
 			Runnable r = new Runnable() {
-				public void run() {
-					StringBuilder mb = new StringBuilder();
-					StringBuilder bb = new StringBuilder();
 
-					for (int square = start; square < end; square++) {
-						int[] squares = getRookSquares(square);
-						long magic = findMagic(squares);
-						if (magic == 0) {
-							System.out.println("Failed on " + square);
-							System.exit(0);
-						}
-						mb.append(magic);
-						mb.append("L, ");
-						bb.append(squares.length);
-						bb.append(", ");
-						System.out.println(square);
-					}
-					System.out.println(mb.toString());
-					System.out.println(bb.toString());
+				@Override
+				public void run() {
+					findMagicForOneSquare(square);
+					cdl.countDown();
 				}
+
 			};
 			exec.execute(r);
 		}
+		try {
+			cdl.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		System.exit(0);
+	}
+
+	static public void findMagicForOneSquare(int square) {
+		int[] squares = getRookSquares(square);
+		long magic = findMagic(squares);
+		if (magic == 0) {
+			System.out.println("Failed on " + square);
+			System.exit(0);
+		}
+		System.out.printf("rookMagic[%d] = %dL;\n", square, magic);
 	}
 
 	// Magics that work for files and diagonals
@@ -284,6 +315,7 @@ public class Magic {
 		// 28, 35, 42, 49}));
 
 		printRookMagics();
+
 	}
 
 }

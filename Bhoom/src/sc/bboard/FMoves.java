@@ -74,7 +74,7 @@ public class FMoves {
 	 * @return
 	 */
 	public static long rookAttacks(short square, long occ) {
-		return RookBishopAttacksFast.getRookAttacks(square, occ, 0L);
+		return RookBishopAttacksFaster.getRookAttacks(square, occ, 0L);
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class FMoves {
 	 * @return
 	 */
 	public static long bishopAttacks(short square, long occ) {
-		return RookBishopAttacksFast.getBishopAttacks(square, occ, 0L);
+		return RookBishopAttacksFaster.getBishopAttacks(square, occ, 0L);
 	}
 
 	/**

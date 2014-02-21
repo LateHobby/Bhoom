@@ -1,0 +1,157 @@
+
+#Futility Pruning Notes
+
+
+Futility pruning is the process of eliminating nodes when the depth left to search is 2 or 1, without
+actually doing the search at those nodes.
+Here is an explanation of futility pruning as I have implemented it. I will try to make this document
+as self-contained as possible.
+
+##Notation
+
+We will use some notation in the following discussion. We assume that a **static evaluation** of a position
+consists of two components, the **material** component and the **positional** component.\
+ We use the word __depthLeft__
+to indicate the number of levels left to search (before quiescent search begins).\
+For any quantity __x__ we use __L(x)__ and __U(x)__ to  denote lower and upper bounds on __x__.
+
+
+Consider a search that proceeds from __depthLeft=2__ to __depthLeft=1__ to __depthLeft=0__.
+Let the three nodes be __n~2~__, __n~1~__ and __n~0~__, respectively.
+At each node __n~i~__, define the following quantities:
+
+- __E~i~__, __&alpha;~i~__, __&beta;~i~__ : the evaluation, alpha and beta at __n~i~__
+- __M~i~__, __P~i~__ : Material and positional components of static evaluation at __n~i~__
+- __S~i~ =   M~i~ + P~i~__ : Static evaluation at __n~i~__
+- __&Delta;M~i~ = M~i~ - M~i-1~__ : Change in __M~i~__ while going from __n~i~__ to __n~i-1~__
+- __&Delta;P~i~ = P~i~ - P~i-1~__ : Change in __M~i~__ while going from __n~i~__ to __n~i-1~__
+
+##Move Specific Level 1 Futility Pruning
+
+We will derive a condition for __&alpha;~1~ \> -E~0~__, the alpha-cutoff condition at __n~1~__.
+
+We have:
+
+>__E~0~ &geq; S~0~__, by the stand-pat criterion in quiescent search (which starts at __n~0~__)\
+>__S~0~ = - ( S~1~ + &Delta;M~1~ + &Delta;P~1~ )__  by definition
+
+Together they give
+
+>__-E~0~ &leq; -S~0~ = S~1~ + &Delta;M~1~ + &Delta;P~1~ &leq; S~1~ + U(&Delta;M~1~) + U(&Delta;P~1~)__, because we are taking upper bounds in
+the RHS
+
+So
+
+>__&alpha;~1~ \> S~1~ + U(&Delta;M~1~) + U(&Delta;P~1~) &rArr;  &alpha;~1~ \> -E~0~__ and this move will fail-low.
+
+
+So in order to determine whether the current move fails low, we need estimates
+for __U(&Delta;M~1~)__ and  __U(&Delta;P~1~)__. Typically
+
+- __U(&Delta;P~1~)__ is heuristically determined, and can vary from evaluation function to evaluation function.
+    A typical value that is used is 300, or 3 pawns.
+- __U(&Delta;M~1~)__ depends on the type of move;
+    - for captures, it is the value of the piece captured,
+    - for promotions, it is the value
+      of the piece that the pawn is being promoted to, minus the value of the pawn,
+    - and for non-captures and non-promotions, it is zero.
+
+##General Level 1 Futility Pruning
+
+The above section described how to prune a particular move without searching it, when certain conditions apply.
+In this section we will see how to prune all moves at a node, if strong enough conditions apply. Recall that
+
+>__&alpha;~1~ \> S~1~ + U(&Delta;M~1~) + U(&Delta;P~1~) &rArr;  &alpha;~1~ \> -E~0~__ (fail low condition)
+
+If we can somehow deduce that __&alpha;~1~ \> S~1~ + U(&Delta;M~1~) + U(&Delta;P~1~)__ for __ALL__ moves,
+then we can prune all moves without searching them. Let
+
+- __V~1~__ denote the value of the highest opponent's
+    attacked piece, and let
+- __Q~1~__ denote the highest piece that can be gained by promotion, at node __n~1~__.\
+
+Then we have:
+
+>__U(&Delta;M~1~) &leq; _max_(V~1~, Q~1~-100)__, (assuming the value of a pawn to be 100)\
+and the fail low condition for all moves becomes\
+>__&alpha;~1~ \> S~1~ + _max_(V~1~, Q~1~-100) + U(&Delta;P~1~)__
+
+So if we know the highest opponent's attacked piece and the highest piece that we could gain by promotion,
+then we could possibly prune all moves at a node.
+
+
+##Move Specific Level 2 Futility Pruning
+
+We will derive a condition at __n~2~__ which will ensure that
+__&alpha;~1~ \> S~1~ + &Delta;M~1~ + &Delta;P~1~__, the alpha cutoff condition. Since
+
+>__S~1~ = -(S~2~ + &Delta;M~2~ + &Delta;P~2~)__  (by definition)\
+and\
+__&alpha;~1~ = - &beta;~2~__
+we have the equivalence\
+__&alpha;~1~ > S~1~ + &Delta;M~1~ + &Delta;P~1~  &hArr;  -&beta;~2~ > -(S~2~ + &Delta;M~2~ + &Delta;P~2~) + &Delta;M~1~ + &Delta;P~1~__
+
+Writing this another way
+
+>__&beta;~2~ < S~2~ + &Delta;M~2~ + &Delta;P~2~ - &Delta;M~1~ - &Delta;P~1~__
+
+
+So if
+
+>__&beta;~2~ &lt; L(S~2~ + &Delta;M~2~ + &Delta;P~2~ - &Delta;M~1~ - &Delta;P~1~)__
+
+then, the fail-low condition at __n~1~__ is satisfied, and we need not search __n~1~__.
+So if we have
+
+>__&beta;~2~  &lt;  S~2~ + L(&Delta;M~2~) + L(&Delta;P~2~) - U(&Delta;M~1~) - U(&Delta;P~1~) &leq;
+ L(S~2~ + &Delta;M~2~ + &Delta;P~2~ - &Delta;M~1~ - &Delta;P~1~)__
+
+then the fail-low condition at __n~1~__ is satisfied.
+
+- __L(&Delta;P~2~)__ : A heuristic value, usually negative, and typically around -500
+- __U(&Delta;P~1~)__ : The same heuristic value used in Level 1 pruning
+- __L(&Delta;M~2~)__ : Value of the piece captured by the move at __n~2~__.
+- __U(&Delta;M~1~)__ : Since it's not known what piece could be captured in the move at __n~1~__, a safe way
+    to bound this value is to use the highest value piece of the moving side, or if the opponent has a pawn that
+    is a step away from promotion, and the move at __n2__ does not capture it, then use the value of a queen.
+
+## General Level 2 Futility Pruning
+
+If, we substitute the weakest possible values in the condition for Move Specific Level 2 Pruning, and the
+condition still holds, then we can prune all moves at __n~2~__. Specifically, these would be:
+
+- __L(&Delta;M~2~)__ : Use zero, since not all moves are captures.
+- __U(&Delta;M~1~)__ : Use the highest value piece of the moving side, or if the opponent has a pawn that
+    is a step away from promotion, use the value of a queen.
+
+## Null Moves
+
+The conditions for Move Specific Level 1 and Move Specific Level 2 pruning can be simplified in the case
+of a null move, and futility pruning can be applied. Specifically, because the null move is a non-capture and
+a non-promoting move, for Level 1, __&Delta;M~1~ = 0__, and for Level 2, __&Delta;M~2~ = 0__, which gives
+
+>__&alpha;~1~ \> S~1~  + U(&Delta;P~1~)__  (for Level 1) and\
+>__&beta;~2~  &lt;  S~2~  + L(&Delta;P~2~) - U(&Delta;M~1~) - U(&Delta;P~1~)__ (for Level 2)
+
+## PV nodes
+
+Not sure about this. Rethink...
+
+## Futility pruning and checks
+
+For Level 1 pruning, if the side to move is in check at __n~1~__, then as long as the set of moves being
+considered is legal, futility pruning can be done.
+
+However, level 2 pruning cannot be done?? Not sure about checks in general - rethink...
+
+
+
+## References
+
+The information for this document was gathered from a number of sources on the internet ,
+[H.G. Muller\'s website](http://home.hccnet.nl/h.g.muller/deepfut.html),  (**others**), and discussions with
+Phokham Nonava, the author of the [Flux Chess Engine](http://fluxchess.com/).
+
+
+
+

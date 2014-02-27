@@ -54,6 +54,7 @@ for __U(&Delta;M~1~)__ and  __U(&Delta;P~1~)__. Typically
     - for captures, it is the value of the piece captured,
     - for promotions, it is the value
       of the piece that the pawn is being promoted to, minus the value of the pawn,
+    - for a move that is a capture with promotion, it is the sum of the above two items and
     - and for non-captures and non-promotions, it is zero.
 
 ##General Level 1 Futility Pruning
@@ -66,7 +67,9 @@ In this section we will see how to prune all moves at a node, if strong enough c
 If we can somehow deduce that __&alpha;~1~ \> S~1~ + U(&Delta;M~1~) + U(&Delta;P~1~)__ for __ALL__ moves,
 then we can prune all moves without searching them. Let
 
-- __V~1~__ denote the value of the highest opponent's
+Need to reformulate this, it should include capture AND promotion possibilities...
+
+- __V1~__ denote the value of the highest opponent's
     attacked piece, and let
 - __Q~1~__ denote the highest piece that can be gained by promotion, at node __n~1~__.\
 

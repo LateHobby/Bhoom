@@ -35,8 +35,8 @@ abstract public class AbstractEngine implements SearchEngine {
 	public static boolean listen = false;
 	
 	private static final int MATE_DEPTH = 128;
-	private static final int DELTAPOS_1_UPPERBOUND = 100; // for futility pruning
-	private static final int DELTAPOS_2_LOWERBOUND = -100;
+	private static final int DELTAPOS_1_UPPERBOUND = 300; // for futility pruning
+	private static final int DELTAPOS_2_LOWERBOUND = -300;
 	private static final int NULLMOVE_REDUCTION = 2;
 
 
@@ -341,9 +341,9 @@ abstract public class AbstractEngine implements SearchEngine {
 				// Condition : alpha1 > static1 + v1 + U(deltaPos1)
 				int futilityGap = alpha - staticEval - DELTAPOS_1_UPPERBOUND;
 				if (futilityGap > 0) { 
-					int captureValue = pieceCapturedValue(board, move);
-					if (captureValue < futilityGap) {
-						traceFutilityPrune(staticEval, captureValue);
+					int materialGain = materialGain(board, move);
+					if (materialGain < futilityGap) {
+						traceFutilityPrune(staticEval, materialGain);
 						return true;
 					}
 				}
@@ -353,12 +353,13 @@ abstract public class AbstractEngine implements SearchEngine {
 	}
 
 	
+
 	// Fail low if depth<=1 and the static eval is so low that not even the best
 	// outcome can raise the eval in qsearch above alpha
 	protected boolean isGeneralLevel1FutilityPruned(EngineBoard board, int alpha, int beta,
 			int staticEval, int depthLeft) {
-		if (useFutilityPruning()) {
-			if (depthLeft <= 1) {
+		if (false && useFutilityPruning()) {
+			if (depthLeft == 1) {
 				// Condition: alpha1 > static1 + max attacked opponent piece + U(deltaPos1)
 				int futilityGap = alpha - staticEval - DELTAPOS_1_UPPERBOUND;
 				if (futilityGap > 0) { 
@@ -378,7 +379,7 @@ abstract public class AbstractEngine implements SearchEngine {
 	// outcome cannot lower the eval below beta
 	protected boolean isMoveLevel2FutilityPruned(EngineBoard board, int move,
 			int alpha, int beta, int staticEval, int depthLeft) {
-		if (useFutilityPruning()) {
+		if (useFutilityPruning() && !board.kingInCheck(board.getWhiteToMove())) {
 			if (depthLeft <= 2) {
 				int maxOwnPieceValue = highestPieceValue(board, board.getWhiteToMove());
 				// Condition : beta2 < static2 + v2 + L(deltaPos2) - max self piece  - U(deltaPos1)
@@ -386,9 +387,9 @@ abstract public class AbstractEngine implements SearchEngine {
 				if (futilityGap < 0) { 
 					return true;
 				} else {
-					int captureValue = pieceCapturedValue(board, move);
-					if (captureValue > futilityGap) {
-						traceFutilityPrune(staticEval, captureValue);
+					int materialGain = materialGain(board, move);
+					if (materialGain > futilityGap) {
+						traceFutilityPrune(staticEval, materialGain);
 						return true;
 					}
 				}
@@ -401,8 +402,8 @@ abstract public class AbstractEngine implements SearchEngine {
 	// sequence of two moves can lower the eval below beta
 	protected boolean isGeneralLevel2FutilityPruned(EngineBoard board, int alpha, int beta,
 			int staticEval, int depthLeft) {
-		if (useFutilityPruning()) {
-			if (depthLeft <= 2) {
+		if (false && useFutilityPruning()) {
+			if (depthLeft == 2) {
 				int maxOwnPieceValue = highestPieceValue(board, board.getWhiteToMove());
 				// Condition: beta2 < static2 + 0 + L(deltaPos2) - max own piece - U(deltaPos1)
 				if (beta < staticEval + DELTAPOS_2_LOWERBOUND - maxOwnPieceValue - DELTAPOS_1_UPPERBOUND) {
@@ -411,6 +412,24 @@ abstract public class AbstractEngine implements SearchEngine {
 			}
 		}
 		return false;
+	}
+
+	private int materialGain(EngineBoard board, int move) {
+		int captureValue = pieceCapturedValue(board, move);
+		int promotionGain = promotionMaterialGain(board, move);
+		int materialGain = captureValue + promotionGain;
+		return materialGain;
+	}
+
+
+	private int promotionMaterialGain(EngineBoard board, int move) {
+		byte pieceToPromoteTo = Encodings.getPieceToPromoteTo(move);
+		int promotionGain = 0;
+		if (pieceToPromoteTo != Encodings.EMPTY) {
+			// promotion gain = new piece - pawn
+			promotionGain = evaluator.pieceWeight(pieceToPromoteTo) - evaluator.pieceWeight(Encodings.WPAWN);
+		}
+		return promotionGain;
 	}
 
 	
@@ -635,6 +654,7 @@ abstract public class AbstractEngine implements SearchEngine {
 		LocalVars lv = localVarsPool.allocate();
 		
 		traceEnteredNode(board, beta-1, beta, newDepthLeft-1, ply+1, move, EngineListener.LMR_ZW);
+		// Zero width search with reduced depth
 		int score = -alphaBeta(board, -beta, -(beta-1), newDepthLeft-1, ply+1, 
 				 lv);
 		traceExitNode(score);

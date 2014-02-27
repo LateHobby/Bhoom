@@ -10,6 +10,7 @@ import org.junit.runners.Suite.SuiteClasses;
     TestBoardUtils.class,
     TestFENInfo.class,
     TestLPTTable.class,
+    BinaryMaxHeapTest.class
     
 })
 

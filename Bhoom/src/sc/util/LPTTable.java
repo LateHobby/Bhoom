@@ -20,6 +20,9 @@ public class LPTTable implements TTable {
 	protected int numStored = 0;
 
 	public LPTTable(int numBits, int numProbes) {
+		if (numProbes > 1) {
+			throw new RuntimeException("NumProbes > 1 not supported!");
+		}
 		this.numBits = numBits;
 		this.numProbes = numProbes;
 		TABLE_SIZE = (1 << numBits);
@@ -71,15 +74,20 @@ public class LPTTable implements TTable {
 	}
 
 	@Override
-	public boolean contains(long key) {
+	public boolean contains(long key, ProbeResult returnValue) {
 		long h = (key ^ hash);
 		int index = 2 * ((int) (h & MASK));
 		for (int i = 0; i < numProbes; i++) {
 			if (table[index] == 0) {
+				returnValue.existingKey = 0;
+				returnValue.existingValue = 0;
 				return false;
+			} else {
+				returnValue.existingKey = table[index];
+				returnValue.existingValue = table[index+1];
 			}
 			if (table[index] == key) {
-				cachedKey = key;
+				cachedKey =  key;
 				cachedIndex = index;
 				return true;
 			}

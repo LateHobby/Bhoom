@@ -11,6 +11,7 @@ import sc.util.BitManipulation;
 import sc.util.BoardUtils;
 import sc.util.LPTTable;
 import sc.util.PrintUtils;
+import sc.util.TTable.ProbeResult;
 
 public class See {
 
@@ -21,7 +22,7 @@ public class See {
 	long[] squareKey = new long[64];
 	long[] pieceKey = new long[13];
 	
-	LPTTable evalTable = new LPTTable(20, 2);
+	LPTTable evalTable = new LPTTable(21, 1);
 //	Map<Long, String> fenMap = new HashMap<Long, String>();
 //	Map<Long, Long> bmap = new HashMap<Long, Long>();
 
@@ -50,11 +51,13 @@ public class See {
 			pieceKey[i] = r.nextLong();
 		}
 	}
+	ProbeResult probeResult = new ProbeResult();
 	public int evaluateMove(EngineBoard board, int move, Evaluator eval) {
 		int storedEval = Integer.MIN_VALUE;
 		calls++;
 		long zKey = getPositionAndMoveKey(board, move);
-		if (evalTable.contains(zKey)) {
+		
+		if (evalTable.contains(zKey, probeResult)) {
 			successes++;
 			storedEval = (int) evalTable.get(zKey);
 			if (!debug) {

@@ -57,146 +57,168 @@ public class CTestEngine extends AbstractEngine {
 		
 	}
 	
+	protected int alphaBeta(EngineBoard board, int alpha, int beta,
+			int depthLeft, int ply, LocalVars localVars) {
+		if (abandonSearch) {
+			traceAbandonSearch();
+			return beta; // Doesn't matter what is returned, so return cutoff
+		}
+		boolean quiesce = (depthLeft <= 0);
+		stats.addNode(quiesce);
+		localVars.alpha = alpha;
+		
+		if (retrieveEvalCutoff(board, alpha, beta, depthLeft, localVars)) {
+			stats.ttHit(quiesce);
+			return localVars.eval;
+		}
+		
+		int staticEval = evaluator.evaluate(board);
+		traceStaticEval(staticEval);
+		if (isDraw(board)) {
+			return -contemptFactor(board, staticEval);
+		}
+		
+		alpha = localVars.alpha;
+		
+		if (ply > 0 && noMoveEvalCutoff(board, alpha, beta, staticEval, depthLeft, ply, quiesce, localVars)) {
+//			store(board, alpha, beta, localVars.eval, 0, depthLeft);
+			stats.betaCutoff(0, quiesce);
+			return localVars.eval;
+		}
+		alpha = localVars.alpha;
+
+		if (isGeneralLevel2FutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
+			localVars.eval = beta;
+			return beta;
+		}
+		
+		if (isGeneralLevel1FutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
+			localVars.eval = alpha;
+			return alpha;
+		}
+		int score;
+		int bestScore = Evaluator.MIN_EVAL;
+		int bestMove = 0;
+		boolean pvFound = false;
+		int newDepthLeft = (depthLeft <= 0) ? 0 : depthLeft - 1;
+		
+		int numMoves = generateMoves(board,  quiesce, localVars.hashMove, ply, localVars);
+		if (numMoves == 0) {
+			return terminalEval(board, quiesce, staticEval, depthLeft);
+		}
+
+		
+
+//		if (useMoveSorter()) {
+////			long start = System.currentTimeMillis();
+//			moveSorter.sortMoves(board, ply, localVars.hashMove, localVars.moves, numMoves);
+////			measuredTime += (System.currentTimeMillis() - start);
+//		}
+
+		int i = 0;
+		while (localVars.moveHandler.hasMoreMoves()) {
+			int move = localVars.moveHandler.nextMove();
+			if (isMoveLevel2FutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
+				bestScore = beta;
+				break;
+			}
+			if (isMoveLevel1FutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
+				bestScore = Math.max(bestScore, alpha);
+				break;
+			}
+			makeMove(board, move);
+			LocalVars childLocalVars = localVarsPool.allocate();
+			if (pvFound && useLateMoveReduction() &&
+					lateMoveReductionEval(board, alpha, beta, newDepthLeft, ply,
+							quiesce, move, childLocalVars)) {
+				score = childLocalVars.eval;
+			} else {
+				traceEnteredNode(board, alpha, beta, newDepthLeft, ply+1, move, EngineListener.NORMAL);
+				score = -alphaBeta(board, -beta, -alpha, newDepthLeft, ply+1, 
+						 childLocalVars);
+				traceExitNode(score);
+//				localVars.currentPV.copy(lv.bestNodePV);
+			}
+			undoLastMove(board, move);
+			
+			if (score > bestScore) {
+				bestScore = score;
+				bestMove = move;
+				localVars.bestChildPV.copy(childLocalVars.bestNodePV);
+			} else {
+				incrementHistoryHeuristicArray(move, false);
+			}
+			localVarsPool.release(childLocalVars);
+			
+			if (score >= beta) {
+				stats.betaCutoff(i, quiesce);
+				incrementHistoryHeuristicArray(move, true);
+				addToKillerMoves(board, ply, move, localVars.hashMove);
+				break;
+			}
+			if (score > alpha) {
+				stats.alphaImprovement(i);
+				alpha = score;
+			}
+			pvFound = true;
+			i++;
+		}
+		boolean standPatIsBest = quiesce && staticEval > bestScore && !board.kingInCheck(board.getWhiteToMove());
+		if (!standPatIsBest) {
+			store(board, alpha, beta, bestScore, bestMove, depthLeft);
+			localVars.bestNodePV.addMove(bestMove);
+			localVars.bestNodePV.addChild(localVars.bestChildPV);
+			localVars.bestMove = bestMove;
+		}
+		return standPatIsBest ? staticEval : bestScore;
+
+	}
+
 	
-//	@Override
-//	protected int alphaBeta(EngineBoard board, int alpha, int beta,
-//			int depthLeft, int ply, LocalVars localVars) {
-//		if (abandonSearch) {
-//			traceAbandonSearch();
-//			return beta; // Doesn't matter what is returned, so return cutoff
-//		}
-//		boolean quiesce = (depthLeft <= 0);
-//		stats.addNode(quiesce);
-//		localVars.alpha = alpha;
-//		
-//		if (retrieveEvalCutoff(board, alpha, beta, depthLeft, localVars)) {
-//			stats.ttHit(quiesce);
-//			return localVars.eval;
-//		}
-//		
-//		int staticEval = evaluator.evaluate(board);
-//		traceStaticEval(staticEval);
-//		if (isDraw(board)) {
-//			return -contemptFactor(board, staticEval);
-//		}
-//		
-//		alpha = localVars.alpha;
-//		
-//		if (ply > 0 && noMoveEvalCutoff(board, alpha, beta, staticEval, depthLeft, ply, quiesce, localVars)) {
-////			store(board, alpha, beta, localVars.eval, 0, depthLeft);
-//			stats.betaCutoff(0, quiesce);
-//			return localVars.eval;
-//		}
-//		alpha = localVars.alpha;
-//
-//		
-//		
-//		if (isGeneralFutilityPruned(board, alpha, beta, staticEval, depthLeft)) {
-//			localVars.eval = alpha;
-//			return alpha;
-//		}
-//		int score;
-//		int bestScore = Evaluator.MIN_EVAL;
-//		int bestMove = 0;
-//		boolean pvFound = false;
-//		int newDepthLeft = (depthLeft <= 0) ? 0 : depthLeft - 1;
-//		
-//		
-//		
-//		if (!localVars.moveHandler.generateMoves(board,  quiesce, localVars.hashMove, ply, historyHeuristicArray, killerMoves)) {
-//			return terminalEval(board, quiesce, staticEval, depthLeft);
-//		}
-//
-//		int i = 0;
-//		while (localVars.moveHandler.hasMoreMoves(ply, historyHeuristicArray, killerMoves)) {
-//			int move = localVars.moveHandler.nextMove();
-//			if (isSpecificFutilityPruned(board, move, alpha, beta, staticEval, depthLeft)) {
-//				bestScore = Math.max(bestScore, alpha);
-//				break;
-//			}
-//			makeMove(board, move);
-//			LocalVars childLocalVars = localVarsPool.allocate();
-//			if (pvFound && useLateMoveReduction() &&
-//					lateMoveReductionEval(board, alpha, beta, newDepthLeft, ply,
-//							quiesce, move, childLocalVars)) {
-//				score = childLocalVars.eval;
-//			} else {
-//				traceEnteredNode(board, alpha, beta, newDepthLeft, ply+1, move, EngineListener.NORMAL);
-//				score = -alphaBeta(board, -beta, -alpha, newDepthLeft, ply+1, 
-//						 childLocalVars);
-//				traceExitNode(score);
-////				localVars.currentPV.copy(lv.bestNodePV);
-//			}
-//			undoLastMove(board, move);
-//			
-//			if (score > bestScore) {
-//				bestScore = score;
-//				bestMove = move;
-//				localVars.bestChildPV.copy(childLocalVars.bestNodePV);
-//			} else {
-//				incrementHistoryHeuristicArray(move, false);
-//			}
-//			localVarsPool.release(childLocalVars);
-//			
-//			if (score >= beta) {
-//				stats.betaCutoff(i, quiesce);
-//				incrementHistoryHeuristicArray(move, true);
-//				addToKillerMoves(board, ply, move, localVars.hashMove);
-//				break;
-//			}
-//			if (score > alpha) {
-//				stats.alphaImprovement(i);
-//				alpha = score;
-//			}
-//			pvFound = true;
-//			i++;
-//		}
-//		boolean standPatIsBest = quiesce && staticEval > bestScore && !board.kingInCheck(board.getWhiteToMove());
-//		if (!standPatIsBest) {
-//			store(board, alpha, beta, bestScore, bestMove, depthLeft);
-//			localVars.bestNodePV.addMove(bestMove);
-//			localVars.bestNodePV.addChild(localVars.bestChildPV);
-//			localVars.bestMove = bestMove;
-//		}
-//		return standPatIsBest ? staticEval : bestScore;
-//
-//	}
-//
-//	protected int[][] historyHeuristicArray = new int[64][64];
-//	protected int[][] killerMoves = new int[200][4];
-//	
-//	@Override
-//	public void incrementHistoryHeuristicArray(int move, boolean increment) {
-//		short from = Encodings.getFromSquare(move);
-//		short to = Encodings.getToSquare(move);
-//		if (increment) {
-//			historyHeuristicArray[from][to]++;
-//		} else {
-//			if (historyHeuristicArray[from][to] > 0) {
-//				historyHeuristicArray[from][to]--;
-//			}
-//		}
-//	}
-//
-//	@Override
-//	public void addToKillerMoves(EngineBoard board, int ply, int move, int hashMove) {
-//		if (move == hashMove || isCapture(board, move)) { // don't add captures or the hash move
-//			return;
-//		}
-//		for (int i = killerMoves[ply].length - 2; i >= 0; i--) {
-//		    killerMoves[ply][i + 1] = killerMoves[ply][i];
-//		}
-//		killerMoves[ply][0] = move;
-//	}
-//	
-//	protected boolean isCapture(EngineBoard board, int move) {
-//		if (Encodings.isEnpassantCapture(move)) {
-//			return true;
-//		} else {
-//			return board.getPiece(Encodings.getToSquare(move)) != Encodings.EMPTY;
-//		}
-//	}
-//
+
+	protected int[][] historyHeuristicArray = new int[64][64];
+	protected int[][] killerMoves = new int[200][4];
+	
+	@Override
+	public void incrementHistoryHeuristicArray(int move, boolean increment) {
+		short from = Encodings.getFromSquare(move);
+		short to = Encodings.getToSquare(move);
+		if (increment) {
+			historyHeuristicArray[from][to]++;
+		} else {
+			if (historyHeuristicArray[from][to] > 0) {
+				historyHeuristicArray[from][to]--;
+			}
+		}
+	}
+
+	@Override
+	public void addToKillerMoves(EngineBoard board, int ply, int move, int hashMove) {
+		if (move == hashMove || isCapture(board, move)) { // don't add captures or the hash move
+			return;
+		}
+		for (int i = killerMoves[ply].length - 2; i >= 0; i--) {
+		    killerMoves[ply][i + 1] = killerMoves[ply][i];
+		}
+		killerMoves[ply][0] = move;
+	}
+	
+	protected int generateMoves(EngineBoard board,  boolean quiesce, int hashMove, int ply, 
+			LocalVars localVars) {
+		
+		return localVars.moveHandler.generateMoves(board, quiesce, hashMove, ply, historyHeuristicArray, killerMoves);
+		
+		
+	}
+	
+	protected boolean isCapture(EngineBoard board, int move) {
+		if (Encodings.isEnpassantCapture(move)) {
+			return true;
+		} else {
+			return board.getPiece(Encodings.getToSquare(move)) != Encodings.EMPTY;
+		}
+	}
+
 	
 	
 	@Override

@@ -19,9 +19,18 @@ public  class BinaryMaxHeap<T extends Comparable<T>> {
 
     public BinaryMaxHeap(T[] array) {
         this.array = array;
-        this.pos = 0;
+        reset();
+    }
+    
+    public void reset() {
+    	pos = 0;
+    	isHeap = false;
     }
 
+    public boolean isEmpty() {
+		return pos == 0;
+	}
+    
     /**
      * Adds an element to the heap. O(1) time.
      * @param t
@@ -103,4 +112,6 @@ public  class BinaryMaxHeap<T extends Comparable<T>> {
         if (!Arrays.deepEquals(list.toArray(), l2.toArray())) throw new AssertionError("Lists not equal");
         System.out.println("Done");
     }
+
+	
 }

@@ -38,6 +38,12 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	private static final int TTABLE_MEDIUM_NODE_DROP_TARGET_PERCENTAGE = 60;
 	private static final int TTABLE_MEDIUM_TIME_DROP_TARGET_PERCENTAGE = 60;
 
+	private static final int LMR_SHORT_NODE_DROP_TARGET_PERCENTAGE = 30;
+	private static final int LMR_SHORT_TIME_DROP_TARGET_PERCENTAGE = 15;
+	
+	private static final int LMR_MEDIUM_NODE_DROP_TARGET_PERCENTAGE = 20;
+	private static final int LMR_MEDIUM_TIME_DROP_TARGET_PERCENTAGE = 5;
+
 	private static final int MOVE_SORTING_SHORT_NODE_DROP_TARGET_PERCENTAGE = 95;
 	private static final int MOVE_SORTING_SHORT_TIME_DROP_TARGET_PERCENTAGE = 90;
 	
@@ -108,6 +114,23 @@ public class AspWinFeaturesTest extends ComparisonTestBase {
 	public AspWinFeaturesTest() throws IOException {
 	}
 	
+	@Test
+	public void lmrWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
+		String suite = fastSuite;
+		testCommon("LMR (short)", LMR, aspWinEngine, uci, TEST_DEPTH, suite, 
+				LMR_SHORT_NODE_DROP_TARGET_PERCENTAGE, LMR_SHORT_TIME_DROP_TARGET_PERCENTAGE, 
+				EVAL_INCREASE_PERCENTAGE, false );
+
+	}
+	
+	@Test
+	public void lmrWorksMedium() throws IllegalArgumentException, IllegalAccessException, IOException {
+		String suite = suite20;
+		testCommon("LMR (medium)", LMR, aspWinEngine, uci, TEST_DEPTH, suite, 
+				LMR_MEDIUM_NODE_DROP_TARGET_PERCENTAGE, LMR_MEDIUM_TIME_DROP_TARGET_PERCENTAGE, 
+				EVAL_INCREASE_PERCENTAGE, true );
+	}
+
 	@Test
 	public void evalTableWorksShort() throws IllegalArgumentException, IllegalAccessException, IOException {
 		String suite = fastSuite;

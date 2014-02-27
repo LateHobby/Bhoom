@@ -1,45 +1,62 @@
 package sc.engine.ttables;
 
 import sc.util.LPTTable;
+import sc.util.TTable.ProbeResult;
 import sc.util.TTable.TTEntry;
 
 public class ReplaceIfDeeperAlternate extends AbstractEvalTT {
 
-	LPTTable ttable;
+	LPTTable alwaysReplace;
+	LPTTable replaceIfDeeper;
+	
+	ProbeResult pr = new ProbeResult();
+	
 	TTEntry localEntry = new TTEntry();
 	boolean storeNow = true;
 	
 	public ReplaceIfDeeperAlternate() {
-		ttable = new LPTTable(20, 2);
+		alwaysReplace = new LPTTable(20, 1);
+		replaceIfDeeper = new LPTTable(20, 1);
 	}
 	
 	public ReplaceIfDeeperAlternate(int numBits) {
-		ttable = new LPTTable(numBits, 2);
+		alwaysReplace = new LPTTable(numBits, 1);
+		replaceIfDeeper = new LPTTable(numBits, 1);
 	}
 	
 	@Override
 	public void storeToTT(long key, TTEntry entry) {
 		storeNow = !storeNow;
-		if (ttable.contains(key)) {
+		boolean replaceIfDeeperHasKey = replaceIfDeeper.contains(key, pr);
+		boolean stored = false;
+		if (replaceIfDeeperHasKey && pr.existingKey != 0) {
 			if (storeNow) {
-				ttable.store(key, encode(entry));
+				replaceIfDeeper.store(key, encode(entry));
 			} else {
-				long value = ttable.get(key);
-				decodeInto(value, localEntry);
+				decodeInto(pr.existingValue, localEntry);
 				if (localEntry.depthLeft <= entry.depthLeft) {
-					ttable.store(key, encode(entry));
+					stored = true;
+					replaceIfDeeper.store(key, encode(entry));
 				}
 			}
 		} else {
-			ttable.store(key, encode(entry));
+			stored = true;
+			replaceIfDeeper.store(key, encode(entry));
+		}
+		if (!stored) {
+			alwaysReplace.store(key, encode(entry));
 		}
 
 	}
 
 	@Override
 	public boolean retrieveFromTT(long key, TTEntry returnValue) {
-		if (ttable.contains(key)) {
-			long value = ttable.get(key);
+		if (replaceIfDeeper.contains(key, pr)) {
+			long value = replaceIfDeeper.get(key);
+			decodeInto(value, returnValue);
+			return true;
+		} else if (alwaysReplace.contains(key, pr)){
+			long value = alwaysReplace.get(key);
 			decodeInto(value, returnValue);
 			return true;
 		} else {
@@ -49,7 +66,8 @@ public class ReplaceIfDeeperAlternate extends AbstractEvalTT {
 
 	@Override
 	public void reset() {
-		ttable.reset();
+		replaceIfDeeper.reset();
+		alwaysReplace.reset();
 		
 	}
 }

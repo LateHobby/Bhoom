@@ -60,17 +60,17 @@ public class MiscQualityAndPerformanceTests extends ComparisonTestBase {
 		assertTrue(cstat.newStats.stats("nodes").mean() < cstat.newStats.stats("externalNodes").mean());
 	}
 	
-//	@Test
+	@Test
 	public void testAlwaysReplaceVsReplaceIfDeeperAlternate20() throws IllegalAccessException, IOException {
 		String suite = suite20;
 		
-		CTestEngine mvvLvaEngine = new CTestEngine("AlwaysReplace", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
-		setFlags(mvvLvaEngine, flagsAll);
+		CTestEngine alwaysReplace = new CTestEngine("AlwaysReplace", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new AlwaysReplace(), new MvvLvaHashSorter());
+		setFlags(alwaysReplace, flagsAll);
 		
-		CTestEngine seeHashEngine = new CTestEngine("ReplaceIfDeeperAlternate", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new ReplaceIfDeeperAlternate(), new SeeHashSorter());
-		setFlags(seeHashEngine, flagsAll);
+		CTestEngine replaceIfDeeper = new CTestEngine("ReplaceIfDeeperAlternate", SearchMode.ASP_WIN, new SideToMoveEvaluator(), new ReplaceIfDeeperAlternate(), new MvvLvaHashSorter());
+		setFlags(replaceIfDeeper, flagsAll);
 		
-		ComparisonStats cstat = compareEngines(mvvLvaEngine, seeHashEngine, 7,
+		ComparisonStats cstat = compareEngines(alwaysReplace, replaceIfDeeper, 8,
 				uci, 15, 80, 0, suite, true, resultLog);
 	}
 	

@@ -1,13 +1,17 @@
 package sc.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
 import org.junit.Test;
 
+import sc.util.TTable.ProbeResult;
+
 public class TestLPTTable {
 
+	ProbeResult pr = new ProbeResult();
 	@Test
 	public void test1() {
 		int numBits = 20;
@@ -25,7 +29,7 @@ public class TestLPTTable {
 		}
 		int index = 0;
 		for (int i = 0; i < size; i++) {
-			if (lpt.contains(keys[i])) {
+			if (lpt.contains(keys[i], pr)) {
 				assertEquals(values[i], lpt.get(keys[i]));
 				index++;
 			}
@@ -40,7 +44,7 @@ public class TestLPTTable {
 		LPTTable table = new LPTTable(20, 2);
 		
 		table.store(key, -100);
-		if (table.contains(key)) {
+		if (table.contains(key, pr)) {
 			assertEquals(-100, table.get(key));
 		}
 	}
